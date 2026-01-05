@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: middle
+
+academy:
+  division: MIDDLE
+  min-score: 90.0
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [🎓 중등부] [%thread] %-5level %logger{36} - %msg%n"

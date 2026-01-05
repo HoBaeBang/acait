@@ -1,0 +1,135 @@
+###
+### 학원 학생 관리 시스템 - 중등부 API 테스트
+### Profile: middle (application.yml에서 spring.profiles.active=middle 설정 필요)
+###
+
+### 1. 현재 부서 타입 확인
+GET http://localhost:8080/api/students/division
+Accept: application/json
+
+###
+
+### 2. 중등부 학생 등록 (본인 연락처 필수!)
+POST http://localhost:8080/api/students
+Content-Type: application/json
+
+{
+  "studentId": "M2024001",
+  "name": "최수현",
+  "birthDate": "2010-05-20",
+  "phoneNumber": "010-1111-2222",
+  "parentPhoneNumber": "010-3333-4444",
+  "grade": "MIDDLE_2",
+  "specialNotes": "수학 경시대회 준비 중"
+}
+
+###
+
+### 3. 또 다른 중등부 학생 등록
+POST http://localhost:8080/api/students
+Content-Type: application/json
+
+{
+  "studentId": "M2024002",
+  "name": "정하은",
+  "birthDate": "2011-09-10",
+  "phoneNumber": "010-5555-6666",
+  "parentPhoneNumber": "010-7777-8888",
+  "grade": "MIDDLE_1",
+  "specialNotes": "과학에 관심이 많음"
+}
+
+###
+
+### 4. 본인 연락처 없이 등록 시도 (실패 예상 - 중등부는 본인 연락처 필수)
+POST http://localhost:8080/api/students
+Content-Type: application/json
+
+{
+  "studentId": "M2024003",
+  "name": "강민서",
+  "birthDate": "2009-12-25",
+  "parentPhoneNumber": "010-9999-0000",
+  "grade": "MIDDLE_3"
+}
+
+###
+
+### 5. 학생 정보 조회
+GET http://localhost:8080/api/students/M2024001
+Accept: application/json
+
+###
+
+### 6. 학생 정보 수정
+PUT http://localhost:8080/api/students/M2024001
+Content-Type: application/json
+
+{
+  "studentId": "M2024001",
+  "name": "최수현",
+  "birthDate": "2010-05-20",
+  "phoneNumber": "010-1111-2222",
+  "parentPhoneNumber": "010-3333-4444",
+  "grade": "MIDDLE_3",
+  "specialNotes": "수학 경시대회 금상 수상"
+}
+
+###
+
+### 7. 출석 체크 (AttendanceCheckAspect 동작 - 9시 이후는 지각)
+POST http://localhost:8080/api/students/M2024001/attendance
+Content-Type: application/json
+
+###
+
+### 8. 출석 체크 (두 번째)
+POST http://localhost:8080/api/students/M2024002/attendance
+Content-Type: application/json
+
+###
+
+### 9. 성적 입력 (중등부는 등급 계산 및 학생에게 직접 알림)
+POST http://localhost:8080/api/students/M2024001/score?score=95
+Content-Type: application/json
+
+###
+
+### 10. 성적 입력 (평균 90점 이상이면 학부모에게도 알림)
+POST http://localhost:8080/api/students/M2024002/score?score=92
+Content-Type: application/json
+
+###
+
+### 11. 추가 성적 입력 (평균 계산 및 등급 확인)
+POST http://localhost:8080/api/students/M2024001/score?score=88
+Content-Type: application/json
+
+###
+
+### 12. 낮은 점수 입력 (등급 변화 확인)
+POST http://localhost:8080/api/students/M2024002/score?score=75
+Content-Type: application/json
+
+###
+
+### 13. 우수 학생 조회 (중등부: 평균 90점 이상)
+GET http://localhost:8080/api/students/top
+Accept: application/json
+
+###
+
+### 14. Swagger UI 접속
+# 브라우저에서 다음 URL을 열어보세요:
+# http://localhost:8080/swagger-ui/index.html
+
+###
+
+### 15. H2 Database Console 접속
+# 브라우저에서 다음 URL을 열어보세요:
+# http://localhost:8080/h2-console
+# JDBC URL: jdbc:h2:mem:academydb
+# Username: sa
+# Password: (비어있음)
+
+###

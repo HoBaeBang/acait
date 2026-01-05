@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: elementary
+
+academy:
+  division: ELEMENTARY
+  min-attendance: 80
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [👶 초등부] [%thread] %-5level %logger{36} - %msg%n"
