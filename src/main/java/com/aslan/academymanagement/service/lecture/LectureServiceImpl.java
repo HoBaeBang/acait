@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -48,5 +47,13 @@ public class LectureServiceImpl implements LectureService {
                 .stream()
                 .map(LectureResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    @Override
+    public LectureResponse retrieveLecture(Long lectureId) {
+        return lectureRepository.findById(lectureId)
+                .map(LectureResponse::from)
+                .orElse(null);
     }
 }

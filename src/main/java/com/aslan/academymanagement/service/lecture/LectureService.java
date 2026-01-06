@@ -9,4 +9,6 @@ public interface LectureService {
     public LectureResponse createLecture(LectureRequest req);
 
     List<LectureResponse> retrieveLecture();
+
+    LectureResponse retrieveLecture(Long lectureId);
 }
