@@ -1,5 +1,6 @@
 package com.aslan.academymanagement.service.lecture;
 
+import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.domain.Lecture;
 import com.aslan.academymanagement.domain.LectureSchedule;
 import com.aslan.academymanagement.dto.LectureRequest;
@@ -9,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -17,8 +19,9 @@ public class LectureServiceImpl implements LectureService {
 
     private final LectureRepository lectureRepository;
 
-    @Override
     @Transactional
+    @Loggable
+    @Override
     public LectureResponse createLecture(LectureRequest req) {
         // 강의 추가
         Lecture lecture = req.toLecture();
@@ -35,5 +38,15 @@ public class LectureServiceImpl implements LectureService {
         saved.getSchedules().size();
 
         return LectureResponse.from(saved);
+    }
+
+    @Transactional
+    @Loggable
+    @Override
+    public List<LectureResponse> retrieveLecture() {
+        return lectureRepository.findAll()
+                .stream()
+                .map(LectureResponse::from)
+                .toList();
     }
 }
