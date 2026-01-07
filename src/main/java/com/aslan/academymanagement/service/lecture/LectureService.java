@@ -1,5 +1,6 @@
 package com.aslan.academymanagement.service.lecture;
 
+import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
 
@@ -11,4 +12,6 @@ public interface LectureService {
     List<LectureResponse> retrieveLecture();
 
     LectureResponse retrieveLecture(Long lectureId);
+
+    List<LectureEventDto> getLectureEvents(); // 달력용 데이터 조회
 }

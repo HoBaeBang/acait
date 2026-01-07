@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>강의 시간표</title>
+    <!-- FullCalendar CDN -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        #calendar { max-width: 1100px; margin: 40px auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn { padding: 8px 15px; text-decoration: none; border-radius: 4px; margin-left: 5px; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📅 강의 시간표</h1>
+    <div>
+        <span sec:authentication="name">사용자</span>님 환영합니다!
+        <a href="/" class="btn btn-secondary">🏠 홈으로</a>
+        <a href="/lectures/new" class="btn btn-primary">강의 등록하기</a>
+        <a href="/logout" class="btn btn-danger">로그아웃</a>
+    </div>
+</div>
+
+<div id='calendar'></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek', // 주간 뷰 기본
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay' // 월, 주, 일 선택 버튼
+            },
+            locale: 'ko', // 한국어 설정
+            slotMinTime: '09:00:00', // 달력 시작 시간
+            slotMaxTime: '22:00:00', // 달력 종료 시간
+
+            // API 호출 설정 (여기가 핵심!)
+            events: {
+                url: '/api/v1/lecture/events',
+                method: 'GET',
+                failure: function() {
+                    alert('일정을 불러오는 데 실패했습니다.');
+                }
+            }
+        });
+        calendar.render();
+    });
+</script>
+
+</body>
+</html>

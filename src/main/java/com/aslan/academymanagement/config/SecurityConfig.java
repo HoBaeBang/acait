@@ -25,12 +25,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/profile").permitAll()
                         .requestMatchers("/api/v1/**").permitAll() // 개발 편의를 위해 API는 일단 모두 허용 (나중에 막아야 함)
+                        .requestMatchers("/lectures/**").authenticated() // 강의 관련 페이지는 로그인 필수
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl("/lectures", true) // 로그인 성공 시 강의 목록 페이지로 이동하도록 변경!
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )

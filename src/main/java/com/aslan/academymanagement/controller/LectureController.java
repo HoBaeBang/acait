@@ -1,10 +1,10 @@
 package com.aslan.academymanagement.controller;
 
+import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.service.lecture.LectureService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,5 +41,13 @@ public class LectureController {
     public ResponseEntity<LectureResponse> retrieveLecture(@PathVariable Long lectureId) {
         LectureResponse response = lectureService.retrieveLecture(lectureId);
         return ResponseEntity.ok(response);
+    }
+
+    // FullCalendar용 이벤트 조회 API 추가
+    @GetMapping("/events")
+    @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다.")
+    public ResponseEntity<List<LectureEventDto>> getLectureEvents() {
+        List<LectureEventDto> events = lectureService.getLectureEvents();
+        return ResponseEntity.ok(events);
     }
 }

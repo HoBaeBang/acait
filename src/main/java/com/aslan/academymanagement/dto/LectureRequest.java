@@ -35,9 +35,9 @@ public class LectureRequest {
         }
         return scheduleRequest.stream()
                 .map((t) -> LectureSchedule.builder()
-                        .dayOfWeek(t.dayOfWeek())
-                        .startTime(t.startTime())
-                        .endTime(t.endTime())
+                        .dayOfWeek(t.getDayOfWeek())
+                        .startTime(t.getStartTime())
+                        .endTime(t.getEndTime())
                         .build())
                 .toList();
     }

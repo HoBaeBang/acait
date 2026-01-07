@@ -3,6 +3,7 @@ package com.aslan.academymanagement.service.lecture;
 import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.domain.Lecture;
 import com.aslan.academymanagement.domain.LectureSchedule;
+import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.repository.LectureRepository;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,5 +57,14 @@ public class LectureServiceImpl implements LectureService {
         return lectureRepository.findById(lectureId)
                 .map(LectureResponse::from)
                 .orElse(null);
+    }
+
+    @Transactional
+    @Override
+    public List<LectureEventDto> getLectureEvents() {
+        // 모든 강의를 가져와서 -> 각각의 스케줄을 -> 달력 이벤트(이번 주 기준)로 변환해서 -> 하나의 리스트로 합침
+        return lectureRepository.findAll().stream()
+                .flatMap(lecture -> LectureEventDto.from(lecture).stream())
+                .collect(Collectors.toList());
     }
 }
