@@ -40,6 +40,11 @@ spring:
             scope: profile, email
             # client-id, client-secret은 secret 파일에 있음
 
+# JWT 설정 (값은 application-secret.yml에서 가져옴)
+jwt:
+  # secret: ...
+  access-token-validity-in-seconds: 3600 # 1시간 (이건 공개되어도 상관없음)
+
 logging:
   level:
     com.academy: DEBUG

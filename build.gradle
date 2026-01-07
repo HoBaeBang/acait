@@ -34,16 +34,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     
-    // Thymeleaf (화면 구현용)
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6' // 시큐리티 연동 기능
-
     // Security & OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-    // Hibernate 6.x 호환성 문제 해결을 위한 ANTLR 추가
-//    implementation 'org.antlr:antlr4-runtime:4.13.0'
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // Swagger (SpringDoc OpenAPI) - API 문서화
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
