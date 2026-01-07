@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.aslan'
 version = '0.0.1-SNAPSHOT'
-description = 'academy-management'
+description = 'acait-backend'
 
 java {
     toolchain {

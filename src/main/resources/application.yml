@@ -1,6 +1,6 @@
 spring:
   application:
-    name: academy-management
+    name: acait-backend
 
   profiles:
     active: elementary

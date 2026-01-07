@@ -1258,7 +1258,7 @@ curl -X POST http://localhost:8080/api/students \
 ## 📂 프로젝트 구조
 
 ```
-academy-management/
+acait-backend/
 ├── src/main/java/com/aslan/academymanagement/
 │   ├── AcademyManagementApplication.java          # 1단계: 스프링 부트 시작점
 │   ├── controller/
