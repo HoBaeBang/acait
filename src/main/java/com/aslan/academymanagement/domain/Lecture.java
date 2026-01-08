@@ -36,6 +36,11 @@ public class Lecture {
     @Column(nullable = false)
     private Subject subject;
 
+    // 강사 정보 추가 (N:1 관계)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id")
+    private Member teacher;
+
     // 양방향 매핑: Lecture가 삭제되면 스케줄도 같이 삭제됨 (CascadeType.ALL, orphanRemoval = true)
     @OneToMany(mappedBy = "lecture",
             cascade = CascadeType.ALL,
@@ -54,5 +59,10 @@ public class Lecture {
     public void addSchedule(LectureSchedule schedule) {
         this.schedules.add(schedule);
         schedule.setLecture(this);
+    }
+
+    // 강사 설정 메서드
+    public void setTeacher(Member teacher) {
+        this.teacher = teacher;
     }
 }
