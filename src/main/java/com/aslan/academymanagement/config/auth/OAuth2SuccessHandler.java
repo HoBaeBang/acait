@@ -28,7 +28,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 2. 토큰을 담아 리다이렉트 (프론트엔드가 있다면 프론트 주소로)
         // 지금은 테스트를 위해 그냥 화면에 뿌려주거나, 특정 URL로 보냄
-        String targetUrl = UriComponentsBuilder.fromUriString("/login-success") // 임시 URL
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/login-success") // 프론트엔드 주소 명시
                 .queryParam("token", token)
                 .build().toUriString();
 
