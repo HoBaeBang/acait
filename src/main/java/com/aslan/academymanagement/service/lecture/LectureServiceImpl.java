@@ -3,6 +3,7 @@ package com.aslan.academymanagement.service.lecture;
 import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.domain.Lecture;
 import com.aslan.academymanagement.domain.LectureSchedule;
+import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
@@ -23,9 +24,13 @@ public class LectureServiceImpl implements LectureService {
     @Transactional
     @Loggable
     @Override
-    public LectureResponse createLecture(LectureRequest req) {
+    public LectureResponse createLecture(Member teacher, LectureRequest req) {
         // 강의 추가
         Lecture lecture = req.toLecture();
+
+        // 강사 정보 설정
+        lecture.setTeacher(teacher);
+
         // 스케줄 추출
         List<LectureSchedule> lectureSchedules = req.toLectureSchedules();
         // 스케줄 추가
@@ -44,8 +49,18 @@ public class LectureServiceImpl implements LectureService {
     @Transactional
     @Loggable
     @Override
-    public List<LectureResponse> retrieveLecture() {
+    public List<LectureResponse> retrieveAllLectures() {
         return lectureRepository.findAll()
+                .stream()
+                .map(LectureResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    @Loggable
+    @Override
+    public List<LectureResponse> retrieveMyLectures(Member teacher) {
+        return lectureRepository.findAllByTeacher(teacher)
                 .stream()
                 .map(LectureResponse::from)
                 .toList();
