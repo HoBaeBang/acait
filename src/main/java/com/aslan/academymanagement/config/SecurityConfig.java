@@ -42,6 +42,9 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // Preflight Request (OPTIONS) 허용
+                        .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
+
                         // 정적 리소스 및 로그인 관련 페이지는 모두 허용
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/profile", "/login-success").permitAll()
                         
