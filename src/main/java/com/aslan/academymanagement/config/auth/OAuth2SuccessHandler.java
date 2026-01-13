@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,7 +46,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         if (memberOptional.isEmpty()) {
             String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/register")
                     .queryParam("googleEmail", email)
-                    .queryParam("name", name)
+                    .queryParam("name", URLEncoder.encode(name, StandardCharsets.UTF_8)) // 인코딩 필수
                     .build().toUriString();
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
             return;

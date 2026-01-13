@@ -1,6 +1,7 @@
 package com.aslan.academymanagement.config.auth.dto;
 
 import com.aslan.academymanagement.domain.Member;
+import com.aslan.academymanagement.domain.enums.MemberStatus;
 import com.aslan.academymanagement.domain.enums.Role;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,14 +48,21 @@ public class OAuthAttributes {
     }
 
     // Member 엔티티로 변환 (가입 시점)
+    // 주의: 현재 로직에서는 toEntity()를 직접 호출해서 저장하지 않음 (CustomOAuth2UserService 수정됨)
+    // 하지만 컴파일 에러 방지를 위해 수정해둠
     public Member toEntity() {
         return Member.builder()
                 .name(name)
-                .email(email)
+                .googleEmail(email) // email -> googleEmail 변경
                 .picture(picture)
-                .role(Role.GUEST) // 기본 권한 GUEST
+                .role(Role.ROLE_INSTRUCTOR) // 기본 권한 (임시) - 실제로는 SignupRequest에서 받음
+                .status(MemberStatus.PENDING) // 기본 상태
                 .provider(provider)
                 .providerId(providerId)
+                // 필수 필드인 phone, contactEmail은 OAuth 정보에 없으므로 임시 값 또는 null 처리 필요
+                // 하지만 이 메서드는 더 이상 자동 가입에 쓰이지 않으므로 큰 문제는 없음
+                .phone("") 
+                .contactEmail(email)
                 .build();
     }
 }

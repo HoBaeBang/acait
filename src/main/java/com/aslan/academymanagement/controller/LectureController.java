@@ -40,8 +40,8 @@ public class LectureController {
         // 1. 현재 로그인한 유저의 이메일(username) 가져오기
         String email = userDetails.getUsername();
         
-        // 2. DB에서 Member 엔티티 조회
-        Member teacher = memberRepository.findByEmail(email)
+        // 2. DB에서 Member 엔티티 조회 (findByEmail -> findByGoogleEmail 변경)
+        Member teacher = memberRepository.findByGoogleEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + email));
 
         // 3. 서비스 호출 시 강사 정보 전달
@@ -55,13 +55,12 @@ public class LectureController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         if (userDetails == null) {
-            // 로그인하지 않은 경우 빈 목록 반환하거나 401 에러 (여기서는 일단 빈 목록)
-            // 혹은 전체 목록을 보여줄지 정책 결정 필요. 현재는 "내 강의" 조회이므로 에러가 맞음.
              throw new IllegalArgumentException("로그인이 필요합니다.");
         }
 
         String email = userDetails.getUsername();
-        Member teacher = memberRepository.findByEmail(email)
+        // findByEmail -> findByGoogleEmail 변경
+        Member teacher = memberRepository.findByGoogleEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다."));
 
         List<LectureResponse> lectures = lectureService.retrieveMyLectures(teacher);

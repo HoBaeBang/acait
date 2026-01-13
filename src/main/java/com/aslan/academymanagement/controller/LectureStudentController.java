@@ -62,7 +62,8 @@ public class LectureStudentController {
         if (userDetails == null) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
-        return memberRepository.findByEmail(userDetails.getUsername())
+        // findByEmail -> findByGoogleEmail 변경
+        return memberRepository.findByGoogleEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
     }
 }
