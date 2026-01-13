@@ -7,6 +7,7 @@ import com.aslan.academymanagement.config.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,6 +23,7 @@ import java.util.Arrays;
 
 @RequiredArgsConstructor
 @EnableWebSecurity
+@EnableMethodSecurity // @PreAuthorize 사용을 위해 추가
 @Configuration
 public class SecurityConfig {
 
@@ -50,6 +52,9 @@ public class SecurityConfig {
                         
                         // Swagger UI 허용
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // 회원가입 API는 인증 없이 허용 (토큰 없이 호출해야 하므로)
+                        .requestMatchers("/api/v1/auth/signup").permitAll()
 
                         // API 요청은 인증된 사용자만 허용 (보안 강화!)
                         .requestMatchers("/api/v1/**").authenticated()
