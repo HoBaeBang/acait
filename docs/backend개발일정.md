@@ -25,24 +25,24 @@
 ### 🚀 [Phase 1] 멀티 테넌트 아키텍처 전환 (D-Day ~ D+2)
 > **목표:** 모든 데이터에 소속 학원(`academy_id`)을 부여하여 데이터 격리 구현.
 
-*   **Task 1.1: `Academy` 엔티티 생성**
+*   **Task 1.1: `Academy` 엔티티 생성** (완료 ✅)
     *   `name`, `invite_code`, `max_members` 필드 포함.
-*   **Task 1.2: 모든 엔티티에 `academy_id` 추가 및 연관관계 설정**
+*   **Task 1.2: 모든 엔티티에 `academy_id` 추가 및 연관관계 설정** (완료 ✅)
     *   `Member`, `Student`, `Lecture`, `LectureRecord`, `Settlement` 등.
     *   JPA `@PrePersist` 또는 별도 리스너를 통해 `academy_id` 자동 주입 고려.
-*   **Task 1.3: 회원가입 프로세스 수정**
+*   **Task 1.3: 회원가입 프로세스 수정** (완료 ✅)
     *   최초 가입 시: "새 학원 생성" vs "기존 학원 합류(초대코드)" 선택 로직 추가.
 
 ### 🧩 [Phase 2] 핵심 비즈니스 로직 고도화 (D+3 ~ D+5)
 > **목표:** 현업에서 필수적인 예외 상황(보강, 퇴원, 일정 변경) 처리.
 
-*   **Task 2.1: 학생 퇴원 관리**
+*   **Task 2.1: 학생 퇴원 관리** (진행 예정 🚧)
     *   `Student` 엔티티에 `status` (ATTENDING/DISCHARGED), `discharge_date` 추가.
     *   `DELETE` API를 물리 삭제에서 논리 삭제(상태 변경)로 수정.
-*   **Task 2.2: 보강 시스템 구현**
+*   **Task 2.2: 보강 시스템 구현** (진행 예정 🚧)
     *   `LectureRecord`에 `attendance_status` (REQ_MAKEUP, MAKEUP) 및 `linked_record_id` 추가.
     *   보강 수업 등록 시 원본 결석 기록 검증 로직 구현.
-*   **Task 2.3: 시간표 변경 정책 (Instance vs Series)**
+*   **Task 2.3: 시간표 변경 정책 (Instance vs Series)** (진행 예정 🚧)
     *   `PUT /schedules/{id}` API에서 `scope` 파라미터 처리.
     *   `INSTANCE`: `LectureRecord`만 생성/수정.
     *   `SERIES`: `Schedule` 엔티티 수정 (과거 기록 보존).
@@ -82,7 +82,22 @@
 
 ---
 
-## 4. 결론
+## 4. 작업 히스토리 (History)
 
-현재 백엔드는 **기본적인 CRUD와 인증**은 완성되었으나, **SaaS 형태의 멀티 테넌트 구조**로 전환하는 것이 가장 시급합니다.
-이후 **보강**과 **시간표 정책** 같은 복잡한 비즈니스 로직을 순차적으로 구현하여 v5.0 요구사항을 완수하겠습니다.
+### 2026-01-14 (Day 1)
+*   **[Phase 1] 멀티 테넌트 아키텍처 전환 완료**
+    *   `Academy` 엔티티 및 리포지토리 생성.
+    *   `Member`, `Student`, `Lecture`, `LectureRecord` 엔티티에 `academy_id` 연관관계 추가.
+    *   `SignupRequest` DTO 수정 (`academyName`, `inviteCode` 추가).
+    *   `AuthController` 수정: 원장 가입 시 학원 생성, 강사 가입 시 초대 코드로 학원 합류 로직 구현.
+    *   `Student` 엔티티에 퇴원 관리 필드(`status`, `dischargeDate`) 추가.
+
+---
+
+## 5. 내일 진행할 작업 (To-Do)
+
+### 2026-01-15 (Day 2)
+*   **[Phase 2] 핵심 비즈니스 로직 고도화 시작**
+    *   **학생 퇴원 관리:** `DELETE /api/v1/students/{id}` API를 논리 삭제로 변경.
+    *   **보강 시스템 구현:** `LectureRecord` 엔티티 수정 및 보강 연결 로직 구현.
+    *   **시간표 변경 정책:** 반복 일정 수정 시 `scope` 파라미터 처리 로직 구현.
