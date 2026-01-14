@@ -2,8 +2,8 @@ package com.aslan.academymanagement.service.lecture;
 
 import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.domain.Lecture;
-import com.aslan.academymanagement.domain.LectureSchedule;
 import com.aslan.academymanagement.domain.Member;
+import com.aslan.academymanagement.domain.Schedule;
 import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
@@ -31,11 +31,11 @@ public class LectureServiceImpl implements LectureService {
         // 강사 정보 설정
         lecture.setTeacher(teacher);
 
-        // 스케줄 추출
-        List<LectureSchedule> lectureSchedules = req.toLectureSchedules();
+        // 스케줄 추출 (LectureSchedule -> Schedule)
+        List<Schedule> schedules = req.toSchedules();
         // 스케줄 추가
-        for (LectureSchedule lectureSchedule : lectureSchedules) {
-            lecture.addSchedule(lectureSchedule);
+        for (Schedule schedule : schedules) {
+            lecture.addSchedule(schedule);
         }
         // 강의 및 스케줄 저장
         Lecture saved = lectureRepository.save(lecture);

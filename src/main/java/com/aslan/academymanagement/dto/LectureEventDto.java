@@ -1,15 +1,13 @@
 package com.aslan.academymanagement.dto;
 
 import com.aslan.academymanagement.domain.Lecture;
-import com.aslan.academymanagement.domain.LectureSchedule;
+import com.aslan.academymanagement.domain.Schedule;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +28,7 @@ public class LectureEventDto {
         LocalDate today = LocalDate.now();
         LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 
-        for (LectureSchedule schedule : lecture.getSchedules()) {
+        for (Schedule schedule : lecture.getSchedules()) {
             // 해당 요일의 날짜 계산
             LocalDate targetDate = monday.with(TemporalAdjusters.nextOrSame(schedule.getDayOfWeek()));
             
@@ -39,7 +37,7 @@ public class LectureEventDto {
             LocalDateTime endDateTime = LocalDateTime.of(targetDate, schedule.getEndTime());
 
             events.add(LectureEventDto.builder()
-                    .title(lecture.getTitle())
+                    .title(lecture.getName()) // title -> name
                     .start(startDateTime.toString())
                     .end(endDateTime.toString())
                     .color(getColorBySubject(lecture.getSubject().name()))

@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,30 +24,41 @@ public class Lecture {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "lecture_id")
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LectureType lectureType; // 학원/과외 구분
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Subject subject;
-
-    // 강사 정보 추가 (N:1 관계)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id")
+    @JoinColumn(name = "instructor_id", nullable = false)
     private Member teacher;
 
-    // 양방향 매핑: Lecture가 삭제되면 스케줄도 같이 삭제됨 (CascadeType.ALL, orphanRemoval = true)
+    @Column(nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LectureType type;
+
+    @Enumerated(EnumType.STRING)
+    private Subject subject;
+
+    @Column(name = "default_price", nullable = false)
+    @Builder.Default
+    private BigDecimal defaultPrice = BigDecimal.ZERO;
+
+    @Column(name = "default_duration", nullable = false)
+    @Builder.Default
+    private Integer defaultDuration = 60;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+
+    // LectureSchedule -> Schedule 변경 반영
     @OneToMany(mappedBy = "lecture",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     @Builder.Default
-    private List<LectureSchedule> schedules = new ArrayList<>();
+    private List<Schedule> schedules = new ArrayList<>();
 
     @CreatedDate
     @Column(updatable = false)
@@ -55,13 +67,12 @@ public class Lecture {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    // 연관관계 편의 메서드
-    public void addSchedule(LectureSchedule schedule) {
+    // 연관관계 편의 메서드 수정
+    public void addSchedule(Schedule schedule) {
         this.schedules.add(schedule);
         schedule.setLecture(this);
     }
 
-    // 강사 설정 메서드
     public void setTeacher(Member teacher) {
         this.teacher = teacher;
     }

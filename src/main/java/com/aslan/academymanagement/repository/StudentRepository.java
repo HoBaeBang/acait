@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
-    Optional<Student> findByStudentId(String studentId);
+    Optional<Student> findByStudentNumber(String studentNumber);
 
     List<Student> findByDivision(Division division);
 
@@ -29,11 +29,5 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
             @Param("grade") Grade grade
     );
 
-    @Query("SELECT s FROM Student s WHERE s.division = :division AND s.averageScore >= :minScore")
-    List<Student> findHighAchievers(
-            @Param("division") Division division,
-            @Param("minScore") Double minScore
-    );
-
-    boolean existsByStudentId(String studentId);
+    boolean existsByStudentNumber(String studentNumber);
 }

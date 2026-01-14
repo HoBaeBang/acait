@@ -2,12 +2,12 @@ package com.aslan.academymanagement.dto;
 
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.Division;
+import com.aslan.academymanagement.domain.enums.Grade;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,32 +17,30 @@ import java.time.LocalDateTime;
 public class StudentResponse {
 
     private Long id;
-    private String studentId;
+    private String studentNumber; // studentId -> studentNumber
     private String name;
-    private LocalDate birthDate;
-    private String phoneNumber;
-    private String parentPhoneNumber;
-    private com.aslan.academymanagement.domain.enums.Grade grade;
+    private String school; // 추가
+    private Grade grade;
+    private String birthDate; // LocalDate -> String
+    private String parentPhone; // parentPhoneNumber -> parentPhone
+    private String parentEmail; // 추가
+    private String memo; // specialNotes -> memo
     private Division division;
-    private Integer attendanceCount;
-    private Double averageScore;
-    private String specialNotes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static StudentResponse from(Student student) {
         return StudentResponse.builder()
                 .id(student.getId())
-                .studentId(student.getStudentId())
+                .studentNumber(student.getStudentNumber())
                 .name(student.getName())
-                .birthDate(student.getBirthDate())
-                .phoneNumber(student.getPhoneNumber())
-                .parentPhoneNumber(student.getParentPhoneNumber())
+                .school(student.getSchool())
                 .grade(student.getGrade())
+                .birthDate(student.getBirthDate())
+                .parentPhone(student.getParentPhone())
+                .parentEmail(student.getParentEmail())
+                .memo(student.getMemo())
                 .division(student.getDivision())
-                .attendanceCount(student.getAttendanceCount())
-                .averageScore(student.getAverageScore())
-                .specialNotes(student.getSpecialNotes())
                 .createdAt(student.getCreatedAt())
                 .updatedAt(student.getUpdatedAt())
                 .build();

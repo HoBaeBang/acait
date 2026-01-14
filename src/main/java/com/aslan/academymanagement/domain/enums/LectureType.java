@@ -6,9 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum LectureType {
-    ACADEMY("학원 정규 강의"),
-    TUTORING("1:1 과외"),
-    SPECIAL_LECTURE("특강");
+    BOARD("판서 수업 (고정)"),
+    INDIV("개별 진도 (유동)");
 
     private final String description;
 }
