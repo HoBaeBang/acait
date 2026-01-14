@@ -28,6 +28,10 @@ public class Lecture {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_id", nullable = false)
+    private Academy academy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instructor_id", nullable = false)
     private Member teacher;
 
@@ -53,7 +57,6 @@ public class Lecture {
     @Builder.Default
     private Boolean isActive = true;
 
-    // LectureSchedule -> Schedule 변경 반영
     @OneToMany(mappedBy = "lecture",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
@@ -67,7 +70,6 @@ public class Lecture {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    // 연관관계 편의 메서드 수정
     public void addSchedule(Schedule schedule) {
         this.schedules.add(schedule);
         schedule.setLecture(this);

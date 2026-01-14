@@ -22,6 +22,11 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
+    // 멀티 테넌트 적용: 소속 학원 (필수)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_id", nullable = false)
+    private Academy academy;
+
     // 구글 로그인 식별자 (수정 불가)
     @Column(name = "google_email", nullable = false, unique = true)
     private String googleEmail;
@@ -66,7 +71,8 @@ public class Member {
     private LocalDateTime approvedAt;
 
     @Builder
-    public Member(String googleEmail, String name, String phone, String contactEmail, String picture, Role role, MemberStatus status, String provider, String providerId) {
+    public Member(Academy academy, String googleEmail, String name, String phone, String contactEmail, String picture, Role role, MemberStatus status, String provider, String providerId) {
+        this.academy = academy;
         this.googleEmail = googleEmail;
         this.name = name;
         this.phone = phone;

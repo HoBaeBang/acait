@@ -29,6 +29,10 @@ public class LectureRecord {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_id", nullable = false)
+    private Academy academy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lecture_id", nullable = false)
     private Lecture lecture;
 
