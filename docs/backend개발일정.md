@@ -36,13 +36,13 @@
 ### 🧩 [Phase 2] 핵심 비즈니스 로직 고도화 (D+3 ~ D+5)
 > **목표:** 현업에서 필수적인 예외 상황(보강, 퇴원, 일정 변경) 처리.
 
-*   **Task 2.1: 학생 퇴원 관리** (진행 예정 🚧)
+*   **Task 2.1: 학생 퇴원 관리** (완료 ✅)
     *   `Student` 엔티티에 `status` (ATTENDING/DISCHARGED), `discharge_date` 추가.
     *   `DELETE` API를 물리 삭제에서 논리 삭제(상태 변경)로 수정.
-*   **Task 2.2: 보강 시스템 구현** (진행 예정 🚧)
+*   **Task 2.2: 보강 시스템 구현** (완료 ✅)
     *   `LectureRecord`에 `attendance_status` (REQ_MAKEUP, MAKEUP) 및 `linked_record_id` 추가.
     *   보강 수업 등록 시 원본 결석 기록 검증 로직 구현.
-*   **Task 2.3: 시간표 변경 정책 (Instance vs Series)** (진행 예정 🚧)
+*   **Task 2.3: 시간표 변경 정책 (Instance vs Series)** (완료 ✅)
     *   `PUT /schedules/{id}` API에서 `scope` 파라미터 처리.
     *   `INSTANCE`: `LectureRecord`만 생성/수정.
     *   `SERIES`: `Schedule` 엔티티 수정 (과거 기록 보존).
@@ -50,10 +50,10 @@
 ### 💰 [Phase 3] 정산 및 세금 처리 (D+6 ~ D+7)
 > **목표:** 정확한 강사료 계산 및 세금 공제.
 
-*   **Task 3.1: 정산 엔티티 및 로직 구현**
+*   **Task 3.1: 정산 엔티티 및 로직 구현** (진행 예정 🚧)
     *   `Settlement` 엔티티에 `tax_amount`, `real_amount` 추가.
     *   3.3% 공제 계산 로직 구현 (`Total * 0.033`).
-*   **Task 3.2: 정산 대시보드 API**
+*   **Task 3.2: 정산 대시보드 API** (진행 예정 🚧)
     *   월별, 강사별 정산 현황 조회.
     *   퇴원일 이후 수업 제외 로직 적용.
 
@@ -92,12 +92,18 @@
     *   `AuthController` 수정: 원장 가입 시 학원 생성, 강사 가입 시 초대 코드로 학원 합류 로직 구현.
     *   `Student` 엔티티에 퇴원 관리 필드(`status`, `dischargeDate`) 추가.
 
+### 2026-01-15 (Day 2)
+*   **[Phase 2] 핵심 비즈니스 로직 고도화 완료**
+    *   **학생 퇴원 관리:** `DELETE` API를 논리 삭제(`DISCHARGED`)로 변경 및 퇴원일 기록 구현.
+    *   **보강 시스템 구현:** `LectureRecord`에 보강 상태(`REQ_MAKEUP`, `MAKEUP`) 및 연결(`linkedRecord`) 추가.
+    *   **시간표 변경 정책:** `ScheduleUpdateRequest` DTO 생성 및 `scope`(`INSTANCE`, `SERIES`)에 따른 분기 처리 로직 구현.
+
 ---
 
 ## 5. 내일 진행할 작업 (To-Do)
 
-### 2026-01-15 (Day 2)
-*   **[Phase 2] 핵심 비즈니스 로직 고도화 시작**
-    *   **학생 퇴원 관리:** `DELETE /api/v1/students/{id}` API를 논리 삭제로 변경.
-    *   **보강 시스템 구현:** `LectureRecord` 엔티티 수정 및 보강 연결 로직 구현.
-    *   **시간표 변경 정책:** 반복 일정 수정 시 `scope` 파라미터 처리 로직 구현.
+### 2026-01-16 (Day 3)
+*   **[Phase 3] 정산 및 세금 처리 시작**
+    *   **정산 엔티티 구현:** `Settlement` 엔티티 생성 (`taxAmount`, `realAmount` 포함).
+    *   **정산 로직 구현:** 3.3% 세금 공제 계산 및 월별 정산 데이터 생성 로직 구현.
+    *   **정산 대시보드 API:** 강사별/월별 정산 현황 조회 API 구현.
