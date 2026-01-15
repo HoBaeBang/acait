@@ -13,9 +13,8 @@ public interface StudentManagementService {
 
     Student updateStudent(String studentNumber, StudentRequest request);
 
-    // 출석 체크 및 성적 입력은 LectureRecord로 이동 예정이므로 일단 제거하거나 유지 (추후 결정)
-    // void checkAttendance(String studentId);
-    // void updateScore(String studentId, Double score);
+    // 학생 퇴원 처리 (논리 삭제)
+    void dischargeStudent(String studentNumber);
 
     // 우수 학생 조회도 기준이 변경될 수 있으므로 일단 유지
     List<Student> getTopStudents();

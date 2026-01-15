@@ -4,6 +4,7 @@ import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.annotation.Monitored;
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.Division;
+import com.aslan.academymanagement.domain.enums.StudentStatus;
 import com.aslan.academymanagement.dto.StudentRequest;
 import com.aslan.academymanagement.repository.StudentRepository;
 import com.aslan.academymanagement.service.notification.NotificationService;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -76,6 +78,26 @@ public class ElementaryStudentService implements StudentManagementService {
         student.setMemo(request.getMemo());
 
         return studentRepository.save(student);
+    }
+
+    @Override
+    @Transactional
+    @Loggable
+    public void dischargeStudent(String studentNumber) {
+        Student student = getStudent(studentNumber);
+        
+        // 이미 퇴원한 학생인지 확인
+        if (student.getStatus() == StudentStatus.DISCHARGED) {
+            throw new IllegalStateException("이미 퇴원 처리된 학생입니다.");
+        }
+
+        // 상태 변경 및 퇴원일 기록 (오늘 날짜)
+        student.setStatus(StudentStatus.DISCHARGED);
+        student.setDischargeDate(LocalDate.now());
+        
+        studentRepository.save(student);
+        
+        log.info("👋 초등부 학생 퇴원 처리: {} (퇴원일: {})", student.getName(), student.getDischargeDate());
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.aslan.academymanagement.annotation.Loggable;
 import com.aslan.academymanagement.annotation.Monitored;
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.Division;
+import com.aslan.academymanagement.domain.enums.StudentStatus;
 import com.aslan.academymanagement.dto.StudentRequest;
 import com.aslan.academymanagement.repository.StudentRepository;
 import com.aslan.academymanagement.service.notification.NotificationService;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -32,8 +34,6 @@ public class MiddleStudentService implements StudentManagementService {
     public Student registerStudent(StudentRequest request) {
         log.info("🎓 중등부 학생 등록 시작: {}", request.getName());
 
-        // 중등부는 본인 연락처가 필수라는 로직이 있었으나, 현재 Student 엔티티에는 본인 연락처 필드가 없음 (요구사항 변경)
-        // 따라서 학부모 연락처 필수 체크로 통일하거나, 추후 본인 연락처 필드 추가 시 복구
         if (request.getParentPhone() == null || request.getParentPhone().isEmpty()) {
             throw new IllegalArgumentException("학부모 연락처가 필수입니다!");
         }
@@ -47,7 +47,6 @@ public class MiddleStudentService implements StudentManagementService {
 
         Student saved = studentRepository.save(student);
 
-        // 학생 본인 연락처가 없으므로 학부모에게만 알림
         notificationService.notifyParent(
                 saved.getParentPhone(),
                 String.format("%s 학생이 중등부에 등록되었습니다.", saved.getName())
@@ -80,11 +79,28 @@ public class MiddleStudentService implements StudentManagementService {
     }
 
     @Override
+    @Transactional
+    @Loggable
+    public void dischargeStudent(String studentNumber) {
+        Student student = getStudent(studentNumber);
+        
+        if (student.getStatus() == StudentStatus.DISCHARGED) {
+            throw new IllegalStateException("이미 퇴원 처리된 학생입니다.");
+        }
+
+        student.setStatus(StudentStatus.DISCHARGED);
+        student.setDischargeDate(LocalDate.now());
+        
+        studentRepository.save(student);
+        
+        log.info("👋 중등부 학생 퇴원 처리: {} (퇴원일: {})", student.getName(), student.getDischargeDate());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     @Monitored
     public List<Student> getTopStudents() {
         log.info("🎓 중등부 우수 학생 조회");
-        // TODO: 우수 학생 기준 재정의 필요
         return studentRepository.findByDivision(Division.MIDDLE);
     }
 

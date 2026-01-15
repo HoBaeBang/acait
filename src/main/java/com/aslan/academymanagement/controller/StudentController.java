@@ -51,6 +51,15 @@ public class StudentController {
         return ResponseEntity.ok(StudentResponse.from(student));
     }
 
+    @DeleteMapping("/{studentNumber}")
+    @Operation(summary = "학생 퇴원 처리", description = "학생을 퇴원 상태로 변경합니다 (논리 삭제).")
+    public ResponseEntity<Void> dischargeStudent(
+            @PathVariable String studentNumber
+    ) {
+        studentManagementService.dischargeStudent(studentNumber);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/top")
     @Operation(summary = "우수 학생 조회", description = "우수 학생 목록을 조회합니다.")
     public ResponseEntity<List<StudentResponse>> getTopStudents() {
