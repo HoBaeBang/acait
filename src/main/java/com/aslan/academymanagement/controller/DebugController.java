@@ -29,7 +29,8 @@ public class DebugController {
         result.put("count", beans.size());
         result.put("beans", beans.keySet());
         result.put("currentImplementation", studentManagementService.getClass().getSimpleName());
-        result.put("divisionType", studentManagementService.getDivisionType());
+        // getDivisionType() 메서드가 삭제되었으므로 해당 라인 제거
+        // result.put("divisionType", studentManagementService.getDivisionType());
 
         return ResponseEntity.ok(result);
     }
