@@ -53,6 +53,11 @@ public class LectureRecord {
     @Column(name = "attendance_status", nullable = false)
     private AttendanceStatus attendanceStatus;
 
+    // 보강 연결 (어떤 결석에 대한 보강인지)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "linked_record_id")
+    private LectureRecord linkedRecord;
+
     @Column(name = "daily_log", columnDefinition = "TEXT")
     private String dailyLog;
 

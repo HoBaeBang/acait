@@ -33,6 +33,9 @@ public class RecordRequest {
     @NotNull(message = "출석 상태는 필수입니다.")
     private AttendanceStatus attendanceStatus;
 
+    @Schema(description = "보강 연결 ID (보강 수업일 경우 필수)")
+    private Long linkedRecordId;
+
     private String dailyLog;
 
     @Schema(description = "교재 정보 (JSON)", example = "{\"title\": \"수학의 정석\", \"page\": \"10-20\"}")

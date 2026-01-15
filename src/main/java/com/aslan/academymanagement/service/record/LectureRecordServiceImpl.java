@@ -1,6 +1,7 @@
 package com.aslan.academymanagement.service.record;
 
 import com.aslan.academymanagement.domain.*;
+import com.aslan.academymanagement.domain.enums.AttendanceStatus;
 import com.aslan.academymanagement.dto.RecordRequest;
 import com.aslan.academymanagement.repository.LearningHistoryRepository;
 import com.aslan.academymanagement.repository.LectureRecordRepository;
@@ -39,12 +40,24 @@ public class LectureRecordServiceImpl implements LectureRecordService {
             throw new IllegalArgumentException("해당 강의에 대한 권한이 없습니다.");
         }
 
-        // 3. 시간 충돌 감지 로직 (요구사항 3.4)
+        // 3. 보강 연결 로직 (Task 2.2)
+        LectureRecord linkedRecord = null;
+        if (request.getAttendanceStatus() == AttendanceStatus.MAKEUP) {
+            if (request.getLinkedRecordId() == null) {
+                throw new IllegalArgumentException("보강 수업은 원본 결석 기록(linkedRecordId)이 필수입니다.");
+            }
+            linkedRecord = lectureRecordRepository.findById(request.getLinkedRecordId())
+                    .orElseThrow(() -> new IllegalArgumentException("원본 결석 기록을 찾을 수 없습니다."));
+            
+            // 원본 기록이 '보강 필요(REQ_MAKEUP)' 상태인지 확인
+            if (linkedRecord.getAttendanceStatus() != AttendanceStatus.REQ_MAKEUP) {
+                throw new IllegalStateException("해당 기록은 보강이 필요한 상태가 아닙니다.");
+            }
+        }
+
+        // 4. 시간 충돌 감지 로직 (요구사항 3.4)
         if (request.getActualStartTime() != null) {
             LocalTime expectedEndTime = request.getActualStartTime().plusMinutes(lecture.getDefaultDuration());
-            
-            // TODO: 다음 스케줄 조회 및 충돌 체크 로직 구현 필요
-            // 현재는 간단히 로그만 남김
             log.info("예상 종료 시간: {}", expectedEndTime);
             
             if (!request.isForceUpdate()) {
@@ -53,21 +66,21 @@ public class LectureRecordServiceImpl implements LectureRecordService {
             }
         }
 
-        // 4. 수업 기록 저장
+        // 5. 수업 기록 저장
         LectureRecord record = LectureRecord.builder()
                 .lecture(lecture)
                 .student(student)
                 .date(request.getDate())
                 .actualStartTime(request.getActualStartTime())
-                // actualEndTime은 계산해서 넣거나 null
                 .attendanceStatus(request.getAttendanceStatus())
+                .linkedRecord(linkedRecord) // 보강 연결
                 .dailyLog(request.getDailyLog())
                 .materialInfo(request.getMaterialInfo())
                 .build();
 
         LectureRecord savedRecord = lectureRecordRepository.save(record);
 
-        // 5. 학습 이력(History) 자동 생성 (Side Effect)
+        // 6. 학습 이력(History) 자동 생성 (Side Effect)
         createLearningHistory(savedRecord, request.getMaterialInfo());
     }
 
