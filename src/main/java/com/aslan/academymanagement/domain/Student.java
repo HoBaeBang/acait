@@ -1,6 +1,5 @@
 package com.aslan.academymanagement.domain;
 
-import com.aslan.academymanagement.domain.enums.Division;
 import com.aslan.academymanagement.domain.enums.Grade;
 import com.aslan.academymanagement.domain.enums.StudentStatus;
 import jakarta.persistence.*;
@@ -13,7 +12,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "students")
+@Table(name = "students",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_academy_student_num",
+                        columnNames = {"academy_id", "student_number"}
+                )
+        }
+)
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,6 +36,9 @@ public class Student {
     @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
 
+    @Column(name = "student_number", nullable = false)
+    private String studentNumber;
+
     @Column(nullable = false)
     private String name;
 
@@ -37,6 +46,7 @@ public class Student {
     private String school;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Grade grade;
 
     @Column(name = "birth_date", length = 4)

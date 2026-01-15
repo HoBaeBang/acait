@@ -1,8 +1,10 @@
 package com.aslan.academymanagement.controller;
 
+import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.dto.StudentRequest;
 import com.aslan.academymanagement.dto.StudentResponse;
+import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.student.StudentManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +12,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,13 +26,16 @@ import java.util.List;
 public class StudentController {
 
     private final StudentManagementService studentManagementService;
+    private final MemberRepository memberRepository;
 
     @PostMapping
     @Operation(summary = "학생 등록", description = "신규 학생을 등록합니다.")
     public ResponseEntity<StudentResponse> registerStudent(
+            @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody StudentRequest request
     ) {
-        Student student = studentManagementService.registerStudent(request);
+        Member teacher = getMember(userDetails);
+        Student student = studentManagementService.registerStudent(teacher, request);
         return ResponseEntity.ok(StudentResponse.from(student));
     }
 
@@ -71,11 +78,11 @@ public class StudentController {
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/division")
-    @Operation(summary = "현재 부서 확인", description = "현재 활성화된 부서(Profile)를 확인합니다.")
-    public ResponseEntity<String> getDivisionType() {
-        return ResponseEntity.ok(
-                "현재 부서: " + studentManagementService.getDivisionType()
-        );
+    private Member getMember(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+        return memberRepository.findByGoogleEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
     }
 }

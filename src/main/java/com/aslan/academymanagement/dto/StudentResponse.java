@@ -17,15 +17,15 @@ import java.time.LocalDateTime;
 public class StudentResponse {
 
     private Long id;
-    private String studentNumber; // studentId -> studentNumber
+    private String studentNumber;
     private String name;
-    private String school; // 추가
+    private String school;
     private Grade grade;
-    private String birthDate; // LocalDate -> String
-    private String parentPhone; // parentPhoneNumber -> parentPhone
-    private String parentEmail; // 추가
-    private String memo; // specialNotes -> memo
-    private Division division;
+    private String birthDate;
+    private String parentPhone;
+    private String parentEmail;
+    private String memo;
+    private Division division; // Grade에서 추출
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,7 +40,7 @@ public class StudentResponse {
                 .parentPhone(student.getParentPhone())
                 .parentEmail(student.getParentEmail())
                 .memo(student.getMemo())
-                .division(student.getDivision())
+                .division(student.getGrade().getDivision()) // Grade에서 Division 추출
                 .createdAt(student.getCreatedAt())
                 .updatedAt(student.getUpdatedAt())
                 .build();
