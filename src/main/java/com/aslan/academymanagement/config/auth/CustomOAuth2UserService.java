@@ -49,14 +49,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             Optional<Member> memberOptional = memberRepository.findByGoogleEmail(attributes.getEmail());
             
             // 미가입 사용자는 임시 Member 객체 생성 (DB 저장 안 함)
-            // CustomUserDetails에서 null 처리를 하거나, 여기서 임시 객체를 만들어야 함.
-            // 하지만 CustomUserDetails는 Member 엔티티를 필요로 하므로, 
-            // 미가입 상태에서도 최소한의 정보를 가진 Member 객체를 만들어 넘겨야 함.
             member = memberOptional.orElse(Member.builder()
                     .googleEmail(attributes.getEmail())
                     .name(attributes.getName())
                     .picture(attributes.getPicture())
-                    .role(Role.GUEST) // 임시 권한
+                    .role(Role.ROLE_GUEST) // Role.GUEST -> Role.ROLE_GUEST 수정
                     .build());
         }
 
