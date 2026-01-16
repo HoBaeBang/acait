@@ -1,5 +1,6 @@
 package com.aslan.academymanagement.config.jwt;
 
+import com.aslan.academymanagement.config.auth.dto.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
+    private static final String ACADEMY_ID_KEY = "academyId"; // 추가
     private final Key key;
     private final long accessTokenValidityInMilliseconds;
 
@@ -43,12 +45,21 @@ public class JwtTokenProvider {
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.accessTokenValidityInMilliseconds);
 
-        return Jwts.builder()
-                .setSubject(authentication.getName()) // 이메일 또는 ID
+        JwtBuilder builder = Jwts.builder()
+                .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
                 .signWith(key, SignatureAlgorithm.HS512)
-                .setExpiration(validity)
-                .compact();
+                .setExpiration(validity);
+
+        // CustomUserDetails인 경우 academyId 추가
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            if (userDetails.getAcademyId() != null) {
+                builder.claim(ACADEMY_ID_KEY, userDetails.getAcademyId());
+            }
+        }
+
+        return builder.compact();
     }
 
     // 토큰에서 인증 정보 조회
