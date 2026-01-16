@@ -1,9 +1,11 @@
 package com.aslan.academymanagement.config.auth;
 
 import com.aslan.academymanagement.config.auth.dto.OAuthAttributes;
+import com.aslan.academymanagement.domain.Academy;
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.enums.MemberStatus;
 import com.aslan.academymanagement.domain.enums.Role;
+import com.aslan.academymanagement.repository.AcademyRepository;
 import com.aslan.academymanagement.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final MemberRepository memberRepository;
+    private final AcademyRepository academyRepository;
     private static final String SUPER_ADMIN_EMAIL = "aslanhobae@gmail.com";
 
     @Override
@@ -60,17 +63,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         Member member = memberRepository.findByGoogleEmail(attributes.getEmail())
                 .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
-                .orElse(Member.builder()
-                        .googleEmail(attributes.getEmail())
-                        .name(attributes.getName())
-                        .picture(attributes.getPicture())
-                        .role(Role.ROLE_ADMIN) // 관리자 권한 부여
-                        .status(MemberStatus.ACTIVE) // 즉시 활성화
-                        .provider(attributes.getProvider())
-                        .providerId(attributes.getProviderId())
-                        .phone("010-0000-0000") // 임시 값
-                        .contactEmail(attributes.getEmail())
-                        .build());
+                .orElseGet(() -> createSuperAdmin(attributes));
 
         // 슈퍼 계정은 항상 ADMIN 권한과 ACTIVE 상태를 유지하도록 강제 업데이트
         if (member.getRole() != Role.ROLE_ADMIN || member.getStatus() != MemberStatus.ACTIVE) {
@@ -86,5 +79,24 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 Collections.singleton(new SimpleGrantedAuthority(Role.ROLE_ADMIN.getKey())),
                 attributes.getAttributes(),
                 attributes.getNameAttributeKey());
+    }
+
+    private Member createSuperAdmin(OAuthAttributes attributes) {
+        // 슈퍼 관리자용 기본 학원 생성 (없으면)
+        Academy academy = academyRepository.findAll().stream().findFirst()
+                .orElseGet(() -> academyRepository.save(new Academy("ACAIT 본사")));
+
+        return Member.builder()
+                .academy(academy) // 필수 연관관계 주입
+                .googleEmail(attributes.getEmail())
+                .name(attributes.getName())
+                .picture(attributes.getPicture())
+                .role(Role.ROLE_ADMIN) // 관리자 권한 부여
+                .status(MemberStatus.ACTIVE) // 즉시 활성화
+                .provider(attributes.getProvider())
+                .providerId(attributes.getProviderId())
+                .phone("010-0000-0000") // 임시 값
+                .contactEmail(attributes.getEmail())
+                .build();
     }
 }
