@@ -55,6 +55,9 @@ public class SecurityConfig {
 
                         // 회원가입 API는 인증 없이 허용 (토큰 없이 호출해야 하므로)
                         .requestMatchers("/api/v1/auth/signup").permitAll()
+                        
+                        // 학원 생성 API도 인증 없이 허용 (원장 가입 시 호출)
+                        .requestMatchers("/api/v1/academies").permitAll()
 
                         // API 요청은 인증된 사용자만 허용 (보안 강화!)
                         .requestMatchers("/api/v1/**").authenticated()
