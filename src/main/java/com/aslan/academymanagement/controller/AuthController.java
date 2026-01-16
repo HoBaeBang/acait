@@ -1,10 +1,13 @@
 package com.aslan.academymanagement.controller;
 
+import com.aslan.academymanagement.config.auth.dto.CustomUserDetails;
+import com.aslan.academymanagement.config.jwt.JwtTokenProvider;
 import com.aslan.academymanagement.domain.Academy;
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.enums.MemberStatus;
 import com.aslan.academymanagement.domain.enums.Role;
 import com.aslan.academymanagement.dto.auth.SignupRequest;
+import com.aslan.academymanagement.dto.auth.SignupResponse;
 import com.aslan.academymanagement.repository.AcademyRepository;
 import com.aslan.academymanagement.repository.MemberRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,11 +16,17 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -27,15 +36,17 @@ public class AuthController {
 
     private final MemberRepository memberRepository;
     private final AcademyRepository academyRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입 신청", description = "구글 로그인 후 추가 정보를 입력하여 가입을 신청합니다.")
     @Transactional
-    public ResponseEntity<String> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
 
         // 이미 가입된 이메일인지 확인
         if (memberRepository.findByGoogleEmail(request.getGoogleEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 가입된 이메일입니다.");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new SignupResponse("이미 가입된 이메일입니다.", null));
         }
 
         Academy academy;
@@ -44,7 +55,8 @@ public class AuthController {
         // 원장(ADMIN)인 경우: 새로운 학원 생성 및 즉시 활성화
         if (request.getRole() == Role.ROLE_ADMIN) {
             if (request.getAcademyName() == null || request.getAcademyName().isEmpty()) {
-                return ResponseEntity.badRequest().body("원장 가입 시 학원 이름은 필수입니다.");
+                return ResponseEntity.badRequest()
+                        .body(new SignupResponse("원장 가입 시 학원 이름은 필수입니다.", null));
             }
             academy = academyRepository.save(new Academy(request.getAcademyName()));
             status = MemberStatus.ACTIVE; // 원장은 즉시 활성화
@@ -52,7 +64,8 @@ public class AuthController {
         // 강사(INSTRUCTOR)인 경우: 기존 학원 합류 (초대 코드 필수) 및 승인 대기
         else {
             if (request.getInviteCode() == null || request.getInviteCode().isEmpty()) {
-                return ResponseEntity.badRequest().body("강사 가입 시 초대 코드는 필수입니다.");
+                return ResponseEntity.badRequest()
+                        .body(new SignupResponse("강사 가입 시 초대 코드는 필수입니다.", null));
             }
             academy = academyRepository.findByInviteCode(request.getInviteCode())
                     .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
@@ -73,10 +86,33 @@ public class AuthController {
 
         memberRepository.save(member);
 
+        String token = null;
+        String message;
+
         if (status == MemberStatus.ACTIVE) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다. 로그인해주세요.");
+            // ACTIVE 상태인 경우 즉시 토큰 발급
+            token = createTokenForMember(member);
+            message = "회원가입이 완료되었습니다. 자동 로그인됩니다.";
         } else {
-            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 신청이 완료되었습니다. 원장님의 승인을 기다려주세요.");
+            message = "회원가입 신청이 완료되었습니다. 원장님의 승인을 기다려주세요.";
         }
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new SignupResponse(message, token));
+    }
+
+    private String createTokenForMember(Member member) {
+        // CustomUserDetails 생성 (JwtTokenProvider에서 academyId를 꺼내기 위해 필요)
+        CustomUserDetails userDetails = new CustomUserDetails(member, Map.of());
+
+        // Authentication 객체 생성
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                Collections.singleton(new SimpleGrantedAuthority(member.getRoleKey()))
+        );
+
+        // 토큰 생성
+        return jwtTokenProvider.createToken(authentication);
     }
 }
