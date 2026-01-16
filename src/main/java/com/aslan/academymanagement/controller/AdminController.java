@@ -9,6 +9,7 @@ import com.aslan.academymanagement.repository.MemberRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/v1") // /admin 제거 (프론트엔드 요청 경로와 일치)
+@RequestMapping("/api/v1")
 @Tag(name = "Admin", description = "관리자(원장) 전용 API")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('OWNER')")
@@ -67,7 +69,6 @@ public class AdminController {
         // 인원 제한 체크 (현재 ACTIVE 상태인 강사 수 + 1 > maxMembers)
         long activeCount = memberRepository.countByAcademyAndStatus(academy, MemberStatus.ACTIVE);
         if (activeCount >= academy.getMaxMembers()) {
-            // 403 Forbidden + PLAN_LIMIT 에러 코드 반환 (프론트엔드 처리용)
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("PLAN_LIMIT");
         }
 
@@ -78,7 +79,15 @@ public class AdminController {
     }
 
     private Member getMember(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+        log.info("🔍 AdminController.getMember 호출: username={}", userDetails.getUsername());
+        
         return memberRepository.findByGoogleEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
+                .orElseThrow(() -> {
+                    log.error("❌ 사용자 정보 조회 실패: username={}", userDetails.getUsername());
+                    return new IllegalArgumentException("사용자 정보가 없습니다.");
+                });
     }
 }
