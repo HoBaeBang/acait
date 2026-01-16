@@ -39,24 +39,27 @@ public class AuthController {
         }
 
         Academy academy;
+        MemberStatus status;
 
-        // 원장(ADMIN)인 경우: 새로운 학원 생성
+        // 원장(ADMIN)인 경우: 새로운 학원 생성 및 즉시 활성화
         if (request.getRole() == Role.ROLE_ADMIN) {
             if (request.getAcademyName() == null || request.getAcademyName().isEmpty()) {
                 return ResponseEntity.badRequest().body("원장 가입 시 학원 이름은 필수입니다.");
             }
             academy = academyRepository.save(new Academy(request.getAcademyName()));
+            status = MemberStatus.ACTIVE; // 원장은 즉시 활성화
         }
-        // 강사(INSTRUCTOR)인 경우: 기존 학원 합류 (초대 코드 필수)
+        // 강사(INSTRUCTOR)인 경우: 기존 학원 합류 (초대 코드 필수) 및 승인 대기
         else {
             if (request.getInviteCode() == null || request.getInviteCode().isEmpty()) {
                 return ResponseEntity.badRequest().body("강사 가입 시 초대 코드는 필수입니다.");
             }
             academy = academyRepository.findByInviteCode(request.getInviteCode())
                     .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
+            status = MemberStatus.PENDING; // 강사는 승인 대기
         }
 
-        // 회원 생성 (상태: PENDING)
+        // 회원 생성
         Member member = Member.builder()
                 .academy(academy) // 학원 정보 주입
                 .googleEmail(request.getGoogleEmail())
@@ -64,12 +67,16 @@ public class AuthController {
                 .phone(request.getPhone())
                 .contactEmail(request.getContactEmail())
                 .role(request.getRole())
-                .status(MemberStatus.PENDING) // 승인 대기 상태
+                .status(status) // 역할에 따른 상태 설정
                 .provider("google")
                 .build();
 
         memberRepository.save(member);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 신청이 완료되었습니다. 원장님의 승인을 기다려주세요.");
+        if (status == MemberStatus.ACTIVE) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다. 로그인해주세요.");
+        } else {
+            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 신청이 완료되었습니다. 원장님의 승인을 기다려주세요.");
+        }
     }
 }
