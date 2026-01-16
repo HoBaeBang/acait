@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/admin")
 @Tag(name = "Admin", description = "관리자(원장) 전용 API")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능하도록 보안 설정
+@PreAuthorize("hasRole('OWNER')") // ADMIN -> OWNER 변경
 public class AdminController {
 
     private final MemberRepository memberRepository;

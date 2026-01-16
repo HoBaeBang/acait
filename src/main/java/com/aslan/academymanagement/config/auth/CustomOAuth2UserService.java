@@ -68,7 +68,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .orElseGet(() -> createSuperAdmin(attributes));
 
         // 슈퍼 계정 권한/상태 강제 업데이트 (필요 시)
-        if (member.getRole() != Role.ROLE_ADMIN || member.getStatus() != MemberStatus.ACTIVE) {
+        if (member.getRole() != Role.ROLE_OWNER || member.getStatus() != MemberStatus.ACTIVE) {
              // 엔티티 비즈니스 메서드로 업데이트 권장
         }
         
@@ -84,7 +84,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .googleEmail(attributes.getEmail())
                 .name(attributes.getName())
                 .picture(attributes.getPicture())
-                .role(Role.ROLE_ADMIN)
+                .role(Role.ROLE_OWNER) // ADMIN -> OWNER 변경
                 .status(MemberStatus.ACTIVE)
                 .provider(attributes.getProvider())
                 .providerId(attributes.getProviderId())

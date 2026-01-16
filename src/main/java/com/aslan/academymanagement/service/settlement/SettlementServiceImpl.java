@@ -35,8 +35,8 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public List<SettlementResponse> getMonthlySettlements(Member admin, String yearMonth) {
-        // 권한 체크: 원장(ADMIN)만 조회 가능
-        if (admin.getRole() != Role.ROLE_ADMIN) {
+        // 권한 체크: 원장(OWNER)만 조회 가능
+        if (admin.getRole() != Role.ROLE_OWNER) {
             throw new IllegalArgumentException("정산 현황 조회 권한이 없습니다.");
         }
 

@@ -52,8 +52,8 @@ public class AuthController {
         Academy academy;
         MemberStatus status;
 
-        // 원장(ADMIN)인 경우: 새로운 학원 생성 및 즉시 활성화
-        if (request.getRole() == Role.ROLE_ADMIN) {
+        // 원장(OWNER)인 경우: 새로운 학원 생성 및 즉시 활성화
+        if (request.getRole() == Role.ROLE_OWNER) {
             if (request.getAcademyName() == null || request.getAcademyName().isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new SignupResponse("원장 가입 시 학원 이름은 필수입니다.", null));
