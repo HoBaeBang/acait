@@ -28,7 +28,7 @@ public class LectureServiceImpl implements LectureService {
         // 강의 추가
         Lecture lecture = req.toLecture();
 
-        // 강사 정보 설정
+        // 강사 정보 설정 (이때 Academy 정보도 함께 설정됨 - Lecture.setTeacher 메서드 참고)
         lecture.setTeacher(teacher);
 
         // 스케줄 추출 (LectureSchedule -> Schedule)

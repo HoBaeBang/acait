@@ -77,5 +77,13 @@ public class Lecture {
 
     public void setTeacher(Member teacher) {
         this.teacher = teacher;
+        // 강사가 설정될 때 학원 정보도 자동으로 설정
+        if (teacher != null && teacher.getAcademy() != null) {
+            this.academy = teacher.getAcademy();
+        }
+    }
+
+    public void setAcademy(Academy academy) {
+        this.academy = academy;
     }
 }
