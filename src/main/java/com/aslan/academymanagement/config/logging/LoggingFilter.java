@@ -12,7 +12,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +20,18 @@ import java.util.Map;
 @Slf4j
 @Component
 public class LoggingFilter extends OncePerRequestFilter {
+
+    private static final String[] EXCLUDE_PATHS = {
+            "/swagger-ui", "/v3/api-docs", "/swagger-resources", "/webjars", // Swagger
+            "/css", "/js", "/images", "/favicon.ico", // Static Resources
+            "/h2-console" // H2 Console
+    };
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return Arrays.stream(EXCLUDE_PATHS).anyMatch(path::startsWith);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
