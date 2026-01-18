@@ -2,6 +2,7 @@ package com.aslan.academymanagement.dto;
 
 import com.aslan.academymanagement.domain.Lecture;
 import com.aslan.academymanagement.domain.Schedule;
+import com.aslan.academymanagement.domain.enums.Subject;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -36,17 +37,22 @@ public class LectureEventDto {
             LocalDateTime startDateTime = LocalDateTime.of(targetDate, schedule.getStartTime());
             LocalDateTime endDateTime = LocalDateTime.of(targetDate, schedule.getEndTime());
 
+            // Subject가 null일 경우 처리
+            String subjectName = (lecture.getSubject() != null) ? lecture.getSubject().name() : "NONE";
+
             events.add(LectureEventDto.builder()
-                    .title(lecture.getName()) // title -> name
+                    .title(lecture.getName())
                     .start(startDateTime.toString())
                     .end(endDateTime.toString())
-                    .color(getColorBySubject(lecture.getSubject().name()))
+                    .color(getColorBySubject(subjectName))
                     .build());
         }
         return events;
     }
 
     private static String getColorBySubject(String subject) {
+        if (subject == null) return "#6c757d"; // 회색
+
         switch (subject) {
             case "KOREAN": return "#dc3545"; // 빨강
             case "ENGLISH": return "#28a745"; // 초록
