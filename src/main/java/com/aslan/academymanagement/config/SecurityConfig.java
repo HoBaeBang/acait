@@ -47,12 +47,12 @@ public class SecurityConfig {
                         // Preflight Request (OPTIONS) 허용
                         .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
 
+                        // Swagger UI 허용 (가장 상단에 배치하여 우선순위 확보)
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+
                         // 정적 리소스 및 로그인 관련 페이지는 모두 허용
                         .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**", "/profile", "/login-success").permitAll()
                         
-                        // Swagger UI 허용
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
                         // 회원가입 API는 인증 없이 허용 (토큰 없이 호출해야 하므로)
                         .requestMatchers("/api/v1/auth/signup").permitAll()
                         
