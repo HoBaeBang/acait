@@ -53,7 +53,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .googleEmail(attributes.getEmail())
                     .name(attributes.getName())
                     .picture(attributes.getPicture())
-                    .role(Role.ROLE_GUEST) // Role.GUEST -> Role.ROLE_GUEST 수정
+                    .role(Role.ROLE_GUEST)
                     .build());
         }
 
@@ -67,9 +67,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
                 .orElseGet(() -> createSuperAdmin(attributes));
 
-        // 슈퍼 계정 권한/상태 강제 업데이트 (필요 시)
-        if (member.getRole() != Role.ROLE_OWNER || member.getStatus() != MemberStatus.ACTIVE) {
-             // 엔티티 비즈니스 메서드로 업데이트 권장
+        // 슈퍼 계정 권한/상태 강제 업데이트 (ROLE_SUPER_ADMIN)
+        if (member.getRole() != Role.ROLE_SUPER_ADMIN || member.getStatus() != MemberStatus.ACTIVE) {
+             // 엔티티 비즈니스 메서드로 업데이트 권장 (여기서는 생략)
         }
         
         return memberRepository.save(member);
@@ -84,7 +84,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .googleEmail(attributes.getEmail())
                 .name(attributes.getName())
                 .picture(attributes.getPicture())
-                .role(Role.ROLE_OWNER) // ADMIN -> OWNER 변경
+                .role(Role.ROLE_SUPER_ADMIN) // SUPER_ADMIN 권한 부여
                 .status(MemberStatus.ACTIVE)
                 .provider(attributes.getProvider())
                 .providerId(attributes.getProviderId())
