@@ -1,9 +1,11 @@
 package com.aslan.academymanagement.config.logging;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -12,20 +14,31 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class LoggingFilter extends OncePerRequestFilter {
 
+    private final ObjectMapper objectMapper;
+
     private static final String[] EXCLUDE_PATHS = {
-            "/swagger-ui", "/v3/api-docs", "/swagger-resources", "/webjars", // Swagger
-            "/css", "/js", "/images", "/favicon.ico", // Static Resources
-            "/h2-console" // H2 Console
+            "/swagger-ui", "/v3/api-docs", "/swagger-resources", "/webjars",
+            "/css", "/js", "/images", "/favicon.ico",
+            "/h2-console"
     };
+
+    // 로깅에서 제외할 불필요한 헤더 목록 (소문자로 비교)
+    private static final Set<String> IGNORE_HEADERS = Set.of(
+            "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform",
+            "upgrade-insecure-requests", "user-agent", "accept", "accept-encoding", "accept-language",
+            "connection", "host", "content-length", "pragma", "cache-control",
+            "sec-fetch-site", "sec-fetch-mode", "sec-fetch-user", "sec-fetch-dest",
+            "referer", "origin", "cookie", "x-content-type-options", "x-xss-protection", "x-frame-options",
+            "vary", "transfer-encoding", "keep-alive", "date"
+    );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
@@ -46,31 +59,74 @@ public class LoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(requestWrapper, responseWrapper);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
-
-            // Request Header 추출
-            Map<String, String> requestHeaders = new HashMap<>();
-            Enumeration<String> headerNames = requestWrapper.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                String headerName = headerNames.nextElement();
-                requestHeaders.put(headerName, requestWrapper.getHeader(headerName));
-            }
-
-            // Response Header 추출
-            Map<String, String> responseHeaders = new HashMap<>();
-            for (String headerName : responseWrapper.getHeaderNames()) {
-                responseHeaders.put(headerName, responseWrapper.getHeader(headerName));
-            }
-
-            String requestBody = new String(requestWrapper.getContentAsByteArray(), StandardCharsets.UTF_8);
-            String responseBody = new String(responseWrapper.getContentAsByteArray(), StandardCharsets.UTF_8);
-
-            log.info("👉 [REQUEST] {} {} | Headers: {} | Body: {}", 
-                    request.getMethod(), request.getRequestURI(), requestHeaders, requestBody);
-
-            log.info("👈 [RESPONSE] {} {} | Status: {} | Duration: {}ms | Headers: {} | Body: {}",
-                    request.getMethod(), request.getRequestURI(), response.getStatus(), duration, responseHeaders, responseBody);
-
+            logRequest(requestWrapper);
+            logResponse(responseWrapper, requestWrapper.getMethod(), requestWrapper.getRequestURI(), duration);
             responseWrapper.copyBodyToResponse();
+        }
+    }
+
+    private void logRequest(ContentCachingRequestWrapper request) {
+        String headers = getHeaders(request);
+        String body = getBody(request.getContentAsByteArray());
+        String queryString = request.getQueryString() == null ? "" : "?" + request.getQueryString();
+
+        log.info("\n" +
+                "==================== [REQUEST] ====================\n" +
+                "URI      : {} {}{}\n" +
+                "Headers  : {}\n" +
+                "Body     : {}\n" +
+                "===================================================",
+                request.getMethod(), request.getRequestURI(), queryString, headers, body);
+    }
+
+    private void logResponse(ContentCachingResponseWrapper response, String method, String uri, long duration) {
+        String headers = getHeaders(response);
+        String body = getBody(response.getContentAsByteArray());
+
+        log.info("\n" +
+                "==================== [RESPONSE] ===================\n" +
+                "URI      : {} {} ({}ms)\n" +
+                "Status   : {}\n" +
+                "Headers  : {}\n" +
+                "Body     : {}\n" +
+                "===================================================",
+                method, uri, duration, response.getStatus(), headers, body);
+    }
+
+    private String getHeaders(HttpServletRequest request) {
+        Map<String, String> headerMap = new HashMap<>();
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            if (!IGNORE_HEADERS.contains(headerName.toLowerCase())) {
+                headerMap.put(headerName, request.getHeader(headerName));
+            }
+        }
+        return headerMap.isEmpty() ? "(empty)" : headerMap.toString();
+    }
+
+    private String getHeaders(HttpServletResponse response) {
+        Map<String, String> headerMap = new HashMap<>();
+        for (String headerName : response.getHeaderNames()) {
+            if (!IGNORE_HEADERS.contains(headerName.toLowerCase())) {
+                headerMap.put(headerName, response.getHeader(headerName));
+            }
+        }
+        return headerMap.isEmpty() ? "(empty)" : headerMap.toString();
+    }
+
+    private String getBody(byte[] content) {
+        if (content.length == 0) {
+            return "(empty)";
+        }
+        try {
+            String contentString = new String(content, StandardCharsets.UTF_8);
+            // JSON 포맷팅 시도
+            Object json = objectMapper.readValue(contentString, Object.class);
+            return "\n" + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        } catch (Exception e) {
+            // JSON이 아니면 그냥 문자열로 반환
+            return new String(content, StandardCharsets.UTF_8);
         }
     }
 }
