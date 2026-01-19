@@ -2,6 +2,7 @@ package com.aslan.academymanagement.controller;
 
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.enums.Role;
+import com.aslan.academymanagement.dto.SettlementDetailResponse;
 import com.aslan.academymanagement.dto.SettlementResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.settlement.SettlementService;
@@ -54,6 +55,17 @@ public class SettlementController {
         Member admin = getMember(userDetails);
         List<SettlementResponse> settlements = settlementService.getMonthlySettlements(admin, yearMonth);
         return ResponseEntity.ok(settlements);
+    }
+
+    @GetMapping("/{settlementId}/details")
+    @Operation(summary = "정산 상세 내역 조회", description = "특정 정산 건에 포함된 수업 기록 목록을 조회합니다.")
+    public ResponseEntity<List<SettlementDetailResponse>> getSettlementDetails(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long settlementId) {
+
+        Member admin = getMember(userDetails);
+        List<SettlementDetailResponse> details = settlementService.getSettlementDetails(admin, settlementId);
+        return ResponseEntity.ok(details);
     }
 
     @GetMapping("/excel")

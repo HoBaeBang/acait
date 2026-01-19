@@ -5,6 +5,7 @@ import com.aslan.academymanagement.domain.enums.AttendanceStatus;
 import com.aslan.academymanagement.domain.enums.Role;
 import com.aslan.academymanagement.domain.enums.SettlementStatus;
 import com.aslan.academymanagement.domain.enums.StudentStatus;
+import com.aslan.academymanagement.dto.SettlementDetailResponse;
 import com.aslan.academymanagement.dto.SettlementResponse;
 import com.aslan.academymanagement.repository.LectureRecordRepository;
 import com.aslan.academymanagement.repository.SettlementRepository;
@@ -147,6 +148,44 @@ public class SettlementServiceImpl implements SettlementService {
         } catch (IOException e) {
             throw new RuntimeException("엑셀 파일 생성 중 오류가 발생했습니다.", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SettlementDetailResponse> getSettlementDetails(Member admin, Long settlementId) {
+        // 1. 권한 체크
+        if (admin.getRole() != Role.ROLE_OWNER) {
+            throw new IllegalArgumentException("정산 상세 조회 권한이 없습니다.");
+        }
+
+        // 2. 정산 정보 조회
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 정산 정보가 없습니다."));
+
+        // 3. 내 학원의 정산인지 확인
+        if (!settlement.getAcademy().getId().equals(admin.getAcademy().getId())) {
+            throw new IllegalArgumentException("다른 학원의 정산 정보는 조회할 수 없습니다.");
+        }
+
+        // 4. 해당 정산 기간(월)과 강사 정보로 수업 기록 조회
+        YearMonth ym = YearMonth.parse(settlement.getYearMonth());
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
+
+        List<AttendanceStatus> targetStatuses = List.of(
+                AttendanceStatus.ATTENDED,
+                AttendanceStatus.LATE,
+                AttendanceStatus.MAKEUP
+        );
+
+        List<LectureRecord> records = lectureRecordRepository.findByInstructorAndDateBetweenAndStatusIn(
+                settlement.getInstructor(), startDate, endDate, targetStatuses
+        );
+
+        // 5. DTO 변환 및 반환
+        return records.stream()
+                .map(SettlementDetailResponse::from)
+                .collect(Collectors.toList());
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {
