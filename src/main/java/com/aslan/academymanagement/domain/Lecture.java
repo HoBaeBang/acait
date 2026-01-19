@@ -9,6 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,12 @@ public class Lecture {
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate; // 강의 시작일
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate; // 강의 종료일
 
     @OneToMany(mappedBy = "lecture",
             cascade = CascadeType.ALL,

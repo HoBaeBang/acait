@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -17,12 +18,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LectureRequest {
-    private String name; // title -> name
-    private LectureType type; // lectureType -> type
+    private String name;
+    private LectureType type;
     private Subject subject;
     private BigDecimal defaultPrice;
     private Integer defaultDuration;
-    private List<ScheduleRequest> schedules; // scheduleRequest -> schedules
+    private LocalDate startDate; // 추가
+    private LocalDate endDate;   // 추가
+    private List<ScheduleRequest> schedules;
 
     public Lecture toLecture() {
         return Lecture.builder()
@@ -32,6 +35,7 @@ public class LectureRequest {
                 .defaultPrice(defaultPrice != null ? defaultPrice : BigDecimal.ZERO)
                 .defaultDuration(defaultDuration != null ? defaultDuration : 60)
                 .isActive(true)
+                // startDate, endDate는 Service에서 기본값 처리
                 .build();
     }
 

@@ -10,11 +10,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -25,26 +27,15 @@ import java.util.List;
 public class LectureController {
 
     private final LectureService lectureService;
-    private final MemberRepository memberRepository; // 임시로 Repository 직접 사용 (추후 Service로 이동 권장)
+    private final MemberRepository memberRepository;
 
     @PostMapping
     @Operation(summary = "강의 생성", description = "강의 정보를 생성합니다.")
     public ResponseEntity<LectureResponse> createLecture(
-            @AuthenticationPrincipal UserDetails userDetails, // Spring Security가 주입해주는 유저 정보
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody LectureRequest lectureRequest){
         
-        if (userDetails == null) {
-            throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
-
-        // 1. 현재 로그인한 유저의 이메일(username) 가져오기
-        String email = userDetails.getUsername();
-        
-        // 2. DB에서 Member 엔티티 조회 (findByEmail -> findByGoogleEmail 변경)
-        Member teacher = memberRepository.findByGoogleEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + email));
-
-        // 3. 서비스 호출 시 강사 정보 전달
+        Member teacher = getMember(userDetails);
         LectureResponse lecture = lectureService.createLecture(teacher, lectureRequest);
         return ResponseEntity.ok(lecture);
     }
@@ -54,15 +45,7 @@ public class LectureController {
     public ResponseEntity<List<LectureResponse>> retrieveMyLectures(
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        if (userDetails == null) {
-             throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
-
-        String email = userDetails.getUsername();
-        // findByEmail -> findByGoogleEmail 변경
-        Member teacher = memberRepository.findByGoogleEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다."));
-
+        Member teacher = getMember(userDetails);
         List<LectureResponse> lectures = lectureService.retrieveMyLectures(teacher);
         return ResponseEntity.ok(lectures);
     }
@@ -81,11 +64,21 @@ public class LectureController {
         return ResponseEntity.ok(response);
     }
 
-    // FullCalendar용 이벤트 조회 API 추가
     @GetMapping("/events")
     @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다.")
-    public ResponseEntity<List<LectureEventDto>> getLectureEvents() {
-        List<LectureEventDto> events = lectureService.getLectureEvents();
+    public ResponseEntity<List<LectureEventDto>> getLectureEvents(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+    ) {
+        List<LectureEventDto> events = lectureService.getLectureEvents(start, end);
         return ResponseEntity.ok(events);
+    }
+
+    private Member getMember(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+        return memberRepository.findByGoogleEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다."));
     }
 }

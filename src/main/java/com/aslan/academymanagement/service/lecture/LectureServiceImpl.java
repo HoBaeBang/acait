@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,22 +26,27 @@ public class LectureServiceImpl implements LectureService {
     @Loggable
     @Override
     public LectureResponse createLecture(Member teacher, LectureRequest req) {
-        // 강의 추가
         Lecture lecture = req.toLecture();
 
-        // 강사 정보 설정 (이때 Academy 정보도 함께 설정됨 - Lecture.setTeacher 메서드 참고)
+        if (req.getStartDate() != null) {
+            lecture.setStartDate(req.getStartDate());
+        } else {
+            lecture.setStartDate(LocalDate.now());
+        }
+
+        if (req.getEndDate() != null) {
+            lecture.setEndDate(req.getEndDate());
+        } else {
+            lecture.setEndDate(lecture.getStartDate().plusMonths(3));
+        }
+
         lecture.setTeacher(teacher);
 
-        // 스케줄 추출 (LectureSchedule -> Schedule)
         List<Schedule> schedules = req.toSchedules();
-        // 스케줄 추가
         for (Schedule schedule : schedules) {
             lecture.addSchedule(schedule);
         }
-        // 강의 및 스케줄 저장
         Lecture saved = lectureRepository.save(lecture);
-
-        // LAZY 로딩된 schedules 컬렉션을 강제로 초기화
         saved.getSchedules().size();
 
         return LectureResponse.from(saved);
@@ -76,10 +82,17 @@ public class LectureServiceImpl implements LectureService {
 
     @Transactional
     @Override
-    public List<LectureEventDto> getLectureEvents() {
-        // 모든 강의를 가져와서 -> 각각의 스케줄을 -> 달력 이벤트(이번 주 기준)로 변환해서 -> 하나의 리스트로 합침
+    public List<LectureEventDto> getLectureEvents(LocalDate start, LocalDate end) {
+        // 조회 기간이 없으면 이번 주 월~일로 설정
+        if (start == null) start = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+        if (end == null) end = start.plusDays(6);
+
+        LocalDate finalStart = start;
+        LocalDate finalEnd = end;
+
+        // 모든 강의를 가져와서, 요청된 기간(start~end)에 해당하는 반복 일정만 생성하여 반환
         return lectureRepository.findAll().stream()
-                .flatMap(lecture -> LectureEventDto.from(lecture).stream())
+                .flatMap(lecture -> LectureEventDto.from(lecture, finalStart, finalEnd).stream())
                 .collect(Collectors.toList());
     }
 }
