@@ -2,6 +2,7 @@ package com.aslan.academymanagement.config;
 
 import com.aslan.academymanagement.config.auth.CustomOAuth2UserService;
 import com.aslan.academymanagement.config.auth.OAuth2SuccessHandler;
+import com.aslan.academymanagement.config.jwt.JwtAuthenticationEntryPoint;
 import com.aslan.academymanagement.config.jwt.JwtAuthenticationFilter;
 import com.aslan.academymanagement.config.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 추가
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -41,6 +43,11 @@ public class SecurityConfig {
                 // 세션 사용 안 함 (STATELESS)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // 인증 실패 시 처리 (401 Unauthorized)
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
 
                 .authorizeHttpRequests(auth -> auth
