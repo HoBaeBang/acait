@@ -3,6 +3,7 @@ package com.aslan.academymanagement.service.settlement;
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.dto.SettlementResponse;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 public interface SettlementService {
@@ -14,4 +15,7 @@ public interface SettlementService {
 
     // 내 정산 내역 조회 (강사용)
     List<SettlementResponse> getMySettlements(Member instructor);
+
+    // 정산 내역 엑셀 다운로드
+    ByteArrayInputStream exportSettlementToExcel(Member admin, String yearMonth);
 }

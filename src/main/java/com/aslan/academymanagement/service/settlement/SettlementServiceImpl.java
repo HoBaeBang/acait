@@ -10,9 +10,14 @@ import com.aslan.academymanagement.repository.LectureRecordRepository;
 import com.aslan.academymanagement.repository.SettlementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -33,26 +38,21 @@ public class SettlementServiceImpl implements SettlementService {
     public void calculateMonthlySettlement(String yearMonth) {
         log.info("💰 {} 월 정산 계산 시작", yearMonth);
 
-        // 1. 날짜 범위 계산 (해당 월의 1일 ~ 말일)
         YearMonth ym = YearMonth.parse(yearMonth);
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
 
-        // 2. 정산 대상 상태 정의 (출석, 지각, 보강 완료)
         List<AttendanceStatus> targetStatuses = List.of(
                 AttendanceStatus.ATTENDED,
                 AttendanceStatus.LATE,
                 AttendanceStatus.MAKEUP
         );
 
-        // 3. 해당 기간의 모든 유효한 수업 기록 조회
         List<LectureRecord> records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses);
 
-        // 4. 강사별로 그룹화
         Map<Member, List<LectureRecord>> recordsByInstructor = records.stream()
                 .collect(Collectors.groupingBy(record -> record.getLecture().getTeacher()));
 
-        // 5. 강사별 정산 금액 계산 및 저장
         for (Map.Entry<Member, List<LectureRecord>> entry : recordsByInstructor.entrySet()) {
             Member instructor = entry.getKey();
             List<LectureRecord> instructorRecords = entry.getValue();
@@ -61,22 +61,19 @@ public class SettlementServiceImpl implements SettlementService {
             BigDecimal totalAmount = BigDecimal.ZERO;
 
             for (LectureRecord record : instructorRecords) {
-                // 퇴원일 체크: 수업일이 퇴원일 이후라면 정산 제외
                 Student student = record.getStudent();
                 if (student.getStatus() == StudentStatus.DISCHARGED &&
                         student.getDischargeDate() != null &&
                         record.getDate().isAfter(student.getDischargeDate())) {
-                    continue; // 제외
+                    continue;
                 }
 
-                // 금액 합산 (강의 기본 단가)
                 BigDecimal price = record.getLecture().getDefaultPrice();
                 if (price != null) {
                     totalAmount = totalAmount.add(price);
                 }
             }
 
-            // 6. Settlement 엔티티 생성 또는 업데이트
             Settlement settlement = settlementRepository.findByInstructorAndYearMonth(instructor, yearMonth)
                     .orElse(Settlement.builder()
                             .academy(academy)
@@ -85,7 +82,6 @@ public class SettlementServiceImpl implements SettlementService {
                             .status(SettlementStatus.OPEN)
                             .build());
 
-            // 이미 마감된 정산은 건드리지 않음
             if (settlement.getStatus() == SettlementStatus.CLOSED) {
                 log.warn("⚠️ 이미 마감된 정산입니다. (강사: {}, 월: {})", instructor.getName(), yearMonth);
                 continue;
@@ -101,7 +97,6 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public List<SettlementResponse> getMonthlySettlements(Member admin, String yearMonth) {
-        // 권한 체크: 원장(OWNER)만 조회 가능
         if (admin.getRole() != Role.ROLE_OWNER) {
             throw new IllegalArgumentException("정산 현황 조회 권한이 없습니다.");
         }
@@ -115,8 +110,51 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public List<SettlementResponse> getMySettlements(Member instructor) {
-        // 본인의 모든 정산 내역 조회 (최신순 정렬 필요하지만 일단 전체)
-        // Repository에 findAllByInstructor 추가 필요
-        return List.of(); // 임시 반환
+        return List.of();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ByteArrayInputStream exportSettlementToExcel(Member admin, String yearMonth) {
+        List<SettlementResponse> settlements = getMonthlySettlements(admin, yearMonth);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("정산 내역");
+
+            // 헤더 생성
+            Row headerRow = sheet.createRow(0);
+            String[] columns = {"강사명", "정산월", "세전 총액", "세금(3.3%)", "실지급액", "상태"};
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(createHeaderStyle(workbook));
+            }
+
+            // 데이터 생성
+            int rowIdx = 1;
+            for (SettlementResponse settlement : settlements) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(settlement.getInstructorName());
+                row.createCell(1).setCellValue(settlement.getYearMonth());
+                row.createCell(2).setCellValue(settlement.getTotalAmount().doubleValue());
+                row.createCell(3).setCellValue(settlement.getTaxAmount().doubleValue());
+                row.createCell(4).setCellValue(settlement.getRealAmount().doubleValue());
+                row.createCell(5).setCellValue(settlement.getStatus().getDescription());
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException("엑셀 파일 생성 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
     }
 }

@@ -8,12 +8,16 @@ import com.aslan.academymanagement.service.settlement.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 @RestController
@@ -33,7 +37,6 @@ public class SettlementController {
 
         Member admin = getMember(userDetails);
 
-        // 권한 체크 (원장만 가능)
         if (admin.getRole() != Role.ROLE_OWNER) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정산 실행 권한이 없습니다.");
         }
@@ -51,6 +54,25 @@ public class SettlementController {
         Member admin = getMember(userDetails);
         List<SettlementResponse> settlements = settlementService.getMonthlySettlements(admin, yearMonth);
         return ResponseEntity.ok(settlements);
+    }
+
+    @GetMapping("/excel")
+    @Operation(summary = "정산 내역 엑셀 다운로드", description = "특정 월의 정산 내역을 엑셀 파일로 다운로드합니다.")
+    public ResponseEntity<InputStreamResource> downloadExcel(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String yearMonth) {
+
+        Member admin = getMember(userDetails);
+        ByteArrayInputStream in = settlementService.exportSettlementToExcel(admin, yearMonth);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=settlement_" + yearMonth + ".xlsx");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(in));
     }
 
     private Member getMember(UserDetails userDetails) {

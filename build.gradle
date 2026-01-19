@@ -46,6 +46,12 @@ dependencies {
     // Swagger (SpringDoc OpenAPI) - API 문서화
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
+    // Excel (Apache POI) - 정산 내역 다운로드용
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
+    // Mail (JavaMailSender) - 알림 발송용
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
