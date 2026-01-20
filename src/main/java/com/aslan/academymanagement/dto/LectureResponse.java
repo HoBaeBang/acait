@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +26,8 @@ public class LectureResponse {
     private BigDecimal defaultPrice;
     private Integer defaultDuration;
     private Boolean isActive;
+    private LocalDate startDate; // 추가
+    private LocalDate endDate;   // 추가
     private List<ScheduleResponse> schedules;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -38,6 +41,8 @@ public class LectureResponse {
                 .defaultPrice(lecture.getDefaultPrice())
                 .defaultDuration(lecture.getDefaultDuration())
                 .isActive(lecture.getIsActive())
+                .startDate(lecture.getStartDate()) // 추가
+                .endDate(lecture.getEndDate())     // 추가
                 .schedules(lecture.getSchedules().stream()
                         .map(ScheduleResponse::from)
                         .collect(Collectors.toList()))
