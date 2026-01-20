@@ -2,6 +2,7 @@ package com.aslan.academymanagement.service.student;
 
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.Student;
+import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.dto.StudentRequest;
 
 import java.util.List;
@@ -18,4 +19,7 @@ public interface StudentManagementService {
     void dischargeStudent(String studentNumber);
 
     List<Student> getTopStudents();
+
+    // 학생이 수강 중인 강의 목록 조회
+    List<LectureResponse> getEnrolledLectures(String studentNumber);
 }

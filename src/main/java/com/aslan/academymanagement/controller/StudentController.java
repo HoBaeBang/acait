@@ -2,6 +2,7 @@ package com.aslan.academymanagement.controller;
 
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.Student;
+import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.dto.StudentRequest;
 import com.aslan.academymanagement.dto.StudentResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
@@ -76,6 +77,15 @@ public class StudentController {
                 .toList();
 
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{studentNumber}/lectures")
+    @Operation(summary = "학생 수강 강의 조회", description = "특정 학생이 수강 중인 강의 목록을 조회합니다.")
+    public ResponseEntity<List<LectureResponse>> getEnrolledLectures(
+            @PathVariable String studentNumber
+    ) {
+        List<LectureResponse> lectures = studentManagementService.getEnrolledLectures(studentNumber);
+        return ResponseEntity.ok(lectures);
     }
 
     private Member getMember(UserDetails userDetails) {
