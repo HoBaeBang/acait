@@ -4,12 +4,12 @@ import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.dto.StudentRequest;
+import com.aslan.academymanagement.dto.StudentResponse;
 
 import java.util.List;
 
 public interface StudentManagementService {
 
-    // 학원별 학번 생성을 위해 Member(강사) 정보 필요
     Student registerStudent(Member teacher, StudentRequest request);
 
     Student getStudent(String studentNumber);
@@ -20,6 +20,8 @@ public interface StudentManagementService {
 
     List<Student> getTopStudents();
 
-    // 학생이 수강 중인 강의 목록 조회
     List<LectureResponse> getEnrolledLectures(String studentNumber);
+
+    // 전체 학생 목록 조회 (학원별)
+    List<StudentResponse> getAllStudents(Member teacher);
 }

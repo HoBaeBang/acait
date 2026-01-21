@@ -9,6 +9,7 @@ import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.StudentStatus;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.dto.StudentRequest;
+import com.aslan.academymanagement.dto.StudentResponse;
 import com.aslan.academymanagement.repository.LectureRepository;
 import com.aslan.academymanagement.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
@@ -116,6 +117,15 @@ public class StudentServiceImpl implements StudentManagementService {
         List<Lecture> lectures = lectureRepository.findAllByStudentId(student.getId());
         return lectures.stream()
                 .map(LectureResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getAllStudents(Member teacher) {
+        Academy academy = teacher.getAcademy();
+        return studentRepository.findAllByAcademy(academy).stream()
+                .map(StudentResponse::from)
                 .collect(Collectors.toList());
     }
 }

@@ -41,6 +41,16 @@ public class StudentController {
         return ResponseEntity.ok(StudentResponse.from(student));
     }
 
+    @GetMapping
+    @Operation(summary = "전체 학생 목록 조회", description = "학원 내 등록된 모든 학생 목록을 조회합니다.")
+    public ResponseEntity<List<StudentResponse>> getAllStudents(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Member teacher = getMember(userDetails);
+        List<StudentResponse> students = studentManagementService.getAllStudents(teacher);
+        return ResponseEntity.ok(students);
+    }
+
     @GetMapping("/{studentNumber}")
     @Operation(summary = "학생 상세 조회", description = "학번(studentNumber)으로 학생 정보를 조회합니다.")
     public ResponseEntity<StudentResponse> getStudent(
