@@ -13,4 +13,10 @@ import java.util.Optional;
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     Optional<Settlement> findByInstructorAndYearMonth(Member instructor, String yearMonth);
     List<Settlement> findAllByAcademyAndYearMonth(Academy academy, String yearMonth);
+
+    // 강사별 정산 내역 조회 (전체 기간)
+    List<Settlement> findAllByInstructor(Member instructor);
+
+    // 강사별 정산 내역 조회 (특정 월)
+    List<Settlement> findAllByInstructorAndYearMonth(Member instructor, String yearMonth);
 }

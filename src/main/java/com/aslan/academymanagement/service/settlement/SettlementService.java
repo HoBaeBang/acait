@@ -2,6 +2,7 @@ package com.aslan.academymanagement.service.settlement;
 
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.dto.SettlementDetailResponse;
+import com.aslan.academymanagement.dto.SettlementForecastResponse;
 import com.aslan.academymanagement.dto.SettlementResponse;
 
 import java.io.ByteArrayInputStream;
@@ -12,10 +13,12 @@ public interface SettlementService {
 
     List<SettlementResponse> getMonthlySettlements(Member admin, String yearMonth);
 
-    List<SettlementResponse> getMySettlements(Member instructor);
+    List<SettlementResponse> getMySettlements(Member instructor, String yearMonth);
 
     ByteArrayInputStream exportSettlementToExcel(Member admin, String yearMonth);
 
-    // 정산 상세 내역 조회
-    List<SettlementDetailResponse> getSettlementDetails(Member admin, Long settlementId);
+    List<SettlementDetailResponse> getSettlementDetails(Member member, Long settlementId);
+
+    // 예상 정산 금액 조회
+    SettlementForecastResponse getSettlementForecast(Member instructor, String yearMonth);
 }

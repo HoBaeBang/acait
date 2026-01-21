@@ -6,8 +6,11 @@ import com.aslan.academymanagement.domain.enums.Role;
 import com.aslan.academymanagement.domain.enums.SettlementStatus;
 import com.aslan.academymanagement.domain.enums.StudentStatus;
 import com.aslan.academymanagement.dto.SettlementDetailResponse;
+import com.aslan.academymanagement.dto.SettlementForecastResponse;
 import com.aslan.academymanagement.dto.SettlementResponse;
 import com.aslan.academymanagement.repository.LectureRecordRepository;
+import com.aslan.academymanagement.repository.LectureRepository;
+import com.aslan.academymanagement.repository.LectureStudentRepository;
 import com.aslan.academymanagement.repository.SettlementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,8 @@ public class SettlementServiceImpl implements SettlementService {
 
     private final SettlementRepository settlementRepository;
     private final LectureRecordRepository lectureRecordRepository;
+    private final LectureStudentRepository lectureStudentRepository;
+    private final LectureRepository lectureRepository; // 추가
 
     @Override
     public void calculateMonthlySettlement(String yearMonth) {
@@ -110,8 +115,10 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SettlementResponse> getMySettlements(Member instructor) {
-        return List.of();
+    public List<SettlementResponse> getMySettlements(Member instructor, String yearMonth) {
+        return settlementRepository.findAllByInstructorAndYearMonth(instructor, yearMonth).stream()
+                .map(SettlementResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -122,7 +129,6 @@ public class SettlementServiceImpl implements SettlementService {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("정산 내역");
 
-            // 헤더 생성
             Row headerRow = sheet.createRow(0);
             String[] columns = {"강사명", "정산월", "세전 총액", "세금(3.3%)", "실지급액", "상태"};
             for (int i = 0; i < columns.length; i++) {
@@ -131,7 +137,6 @@ public class SettlementServiceImpl implements SettlementService {
                 cell.setCellStyle(createHeaderStyle(workbook));
             }
 
-            // 데이터 생성
             int rowIdx = 1;
             for (SettlementResponse settlement : settlements) {
                 Row row = sheet.createRow(rowIdx++);
@@ -152,22 +157,22 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SettlementDetailResponse> getSettlementDetails(Member admin, Long settlementId) {
-        // 1. 권한 체크
-        if (admin.getRole() != Role.ROLE_OWNER) {
-            throw new IllegalArgumentException("정산 상세 조회 권한이 없습니다.");
-        }
-
-        // 2. 정산 정보 조회
+    public List<SettlementDetailResponse> getSettlementDetails(Member member, Long settlementId) {
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 정산 정보가 없습니다."));
 
-        // 3. 내 학원의 정산인지 확인
-        if (!settlement.getAcademy().getId().equals(admin.getAcademy().getId())) {
-            throw new IllegalArgumentException("다른 학원의 정산 정보는 조회할 수 없습니다.");
+        if (member.getRole() == Role.ROLE_OWNER) {
+            if (!settlement.getAcademy().getId().equals(member.getAcademy().getId())) {
+                throw new IllegalArgumentException("다른 학원의 정산 정보는 조회할 수 없습니다.");
+            }
+        } else if (member.getRole() == Role.ROLE_INSTRUCTOR) {
+            if (!settlement.getInstructor().getId().equals(member.getId())) {
+                throw new IllegalArgumentException("본인의 정산 정보만 조회할 수 있습니다.");
+            }
+        } else {
+            throw new IllegalArgumentException("정산 상세 조회 권한이 없습니다.");
         }
 
-        // 4. 해당 정산 기간(월)과 강사 정보로 수업 기록 조회
         YearMonth ym = YearMonth.parse(settlement.getYearMonth());
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
@@ -182,10 +187,81 @@ public class SettlementServiceImpl implements SettlementService {
                 settlement.getInstructor(), startDate, endDate, targetStatuses
         );
 
-        // 5. DTO 변환 및 반환
         return records.stream()
                 .map(SettlementDetailResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SettlementForecastResponse getSettlementForecast(Member instructor, String yearMonth) {
+        // 1. 확정 금액
+        BigDecimal confirmedAmount = settlementRepository.findByInstructorAndYearMonth(instructor, yearMonth)
+                .map(Settlement::getTotalAmount)
+                .orElse(BigDecimal.ZERO);
+
+        // 2. 예정 금액 계산
+        BigDecimal expectedAmount = BigDecimal.ZERO;
+        
+        YearMonth ym = YearMonth.parse(yearMonth);
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
+
+        // 조회하는 달이 과거라면 예정 금액은 0원
+        if (endDate.isBefore(today)) {
+            return SettlementForecastResponse.builder()
+                    .confirmedAmount(confirmedAmount)
+                    .expectedAmount(BigDecimal.ZERO)
+                    .totalForecast(confirmedAmount)
+                    .build();
+        }
+
+        // 남은 기간(내일 ~ 말일) 설정
+        LocalDate forecastStart = today.plusDays(1);
+        if (forecastStart.isBefore(startDate)) {
+            forecastStart = startDate; // 미래의 달을 조회하는 경우 1일부터 시작
+        }
+
+        // 강사의 모든 강의 조회
+        List<Lecture> lectures = lectureRepository.findAllByTeacher(instructor);
+
+        for (Lecture lecture : lectures) {
+            // 강의가 활성 상태이고, 기간 내에 있는지 확인
+            if (!lecture.getIsActive()) continue;
+            
+            // 수강생 수 조회
+            long studentCount = lectureStudentRepository.countByLecture(lecture);
+            if (studentCount == 0) continue;
+
+            // 남은 기간 동안의 수업 횟수 계산
+            long classCount = 0;
+            for (LocalDate date = forecastStart; !date.isAfter(endDate); date = date.plusDays(1)) {
+                // 강의 기간 체크
+                if (date.isBefore(lecture.getStartDate()) || date.isAfter(lecture.getEndDate())) continue;
+
+                // 요일 체크
+                for (Schedule schedule : lecture.getSchedules()) {
+                    if (schedule.getDayOfWeek() == date.getDayOfWeek()) {
+                        classCount++;
+                        break; // 하루에 한 번만 카운트 (같은 요일에 스케줄이 여러 개일 수도 있으므로)
+                    }
+                }
+            }
+
+            // 예정 금액 += 수업 횟수 * 수강생 수 * 단가
+            BigDecimal lectureExpected = lecture.getDefaultPrice()
+                    .multiply(BigDecimal.valueOf(classCount))
+                    .multiply(BigDecimal.valueOf(studentCount));
+            
+            expectedAmount = expectedAmount.add(lectureExpected);
+        }
+
+        return SettlementForecastResponse.builder()
+                .confirmedAmount(confirmedAmount)
+                .expectedAmount(expectedAmount)
+                .totalForecast(confirmedAmount.add(expectedAmount))
+                .build();
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {

@@ -3,6 +3,7 @@ package com.aslan.academymanagement.controller;
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.enums.Role;
 import com.aslan.academymanagement.dto.SettlementDetailResponse;
+import com.aslan.academymanagement.dto.SettlementForecastResponse;
 import com.aslan.academymanagement.dto.SettlementResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.settlement.SettlementService;
@@ -60,14 +61,38 @@ public class SettlementController {
         return ResponseEntity.ok(settlements);
     }
 
+    @GetMapping("/my")
+    @Operation(summary = "내 정산 내역 조회 (강사용)", description = "로그인한 강사의 월별 정산 내역을 조회합니다.")
+    public ResponseEntity<List<SettlementResponse>> getMySettlements(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "조회 월 (YYYY-MM)", example = "2026-01")
+            @RequestParam String yearMonth) {
+
+        Member instructor = getMember(userDetails);
+        List<SettlementResponse> settlements = settlementService.getMySettlements(instructor, yearMonth);
+        return ResponseEntity.ok(settlements);
+    }
+
+    @GetMapping("/forecast")
+    @Operation(summary = "예상 정산 금액 조회 (강사용)", description = "이번 달의 확정 금액과 남은 수업에 대한 예상 금액을 조회합니다.")
+    public ResponseEntity<SettlementForecastResponse> getSettlementForecast(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "조회 월 (YYYY-MM)", example = "2026-01")
+            @RequestParam String yearMonth) {
+
+        Member instructor = getMember(userDetails);
+        SettlementForecastResponse forecast = settlementService.getSettlementForecast(instructor, yearMonth);
+        return ResponseEntity.ok(forecast);
+    }
+
     @GetMapping("/{settlementId}/details")
     @Operation(summary = "정산 상세 내역 조회", description = "특정 정산 건에 포함된 상세 수업 기록 목록을 조회합니다.")
     public ResponseEntity<List<SettlementDetailResponse>> getSettlementDetails(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long settlementId) {
 
-        Member admin = getMember(userDetails);
-        List<SettlementDetailResponse> details = settlementService.getSettlementDetails(admin, settlementId);
+        Member member = getMember(userDetails);
+        List<SettlementDetailResponse> details = settlementService.getSettlementDetails(member, settlementId);
         return ResponseEntity.ok(details);
     }
 
