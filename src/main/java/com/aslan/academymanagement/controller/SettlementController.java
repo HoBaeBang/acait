@@ -7,6 +7,7 @@ import com.aslan.academymanagement.dto.SettlementResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.settlement.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -23,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/settlements")
-@Tag(name = "Settlement", description = "정산 관리 API")
+@Tag(name = "Settlement", description = "정산 및 세금 관리 API")
 @RequiredArgsConstructor
 public class SettlementController {
 
@@ -31,9 +32,10 @@ public class SettlementController {
     private final MemberRepository memberRepository;
 
     @PostMapping("/calculate")
-    @Operation(summary = "월별 정산 실행 (원장용)", description = "특정 월의 정산을 수동으로 실행합니다.")
+    @Operation(summary = "월별 정산 실행 (원장용)", description = "특정 월의 정산을 수동으로 실행합니다. (수업 기록 집계 -> 정산 데이터 생성)")
     public ResponseEntity<String> calculateSettlement(
             @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "정산 월 (YYYY-MM)", example = "2026-01")
             @RequestParam String yearMonth) {
 
         Member admin = getMember(userDetails);
@@ -47,9 +49,10 @@ public class SettlementController {
     }
 
     @GetMapping("/dashboard")
-    @Operation(summary = "월별 정산 현황 조회 (원장용)", description = "특정 월의 학원 전체 정산 현황을 조회합니다.")
+    @Operation(summary = "월별 정산 현황 조회 (원장용)", description = "특정 월의 학원 전체 정산 현황(강사별 요약)을 조회합니다.")
     public ResponseEntity<List<SettlementResponse>> getMonthlySettlements(
             @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "조회 월 (YYYY-MM)", example = "2026-01")
             @RequestParam String yearMonth) {
 
         Member admin = getMember(userDetails);
@@ -58,7 +61,7 @@ public class SettlementController {
     }
 
     @GetMapping("/{settlementId}/details")
-    @Operation(summary = "정산 상세 내역 조회", description = "특정 정산 건에 포함된 수업 기록 목록을 조회합니다.")
+    @Operation(summary = "정산 상세 내역 조회", description = "특정 정산 건에 포함된 상세 수업 기록 목록을 조회합니다.")
     public ResponseEntity<List<SettlementDetailResponse>> getSettlementDetails(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long settlementId) {
@@ -69,9 +72,10 @@ public class SettlementController {
     }
 
     @GetMapping("/excel")
-    @Operation(summary = "정산 내역 엑셀 다운로드", description = "특정 월의 정산 내역을 엑셀 파일로 다운로드합니다.")
+    @Operation(summary = "정산 내역 엑셀 다운로드", description = "특정 월의 정산 내역을 엑셀 파일(.xlsx)로 다운로드합니다.")
     public ResponseEntity<InputStreamResource> downloadExcel(
             @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "다운로드 월 (YYYY-MM)", example = "2026-01")
             @RequestParam String yearMonth) {
 
         Member admin = getMember(userDetails);

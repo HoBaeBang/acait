@@ -11,6 +11,10 @@ import com.aslan.academymanagement.dto.auth.SignupResponse;
 import com.aslan.academymanagement.repository.AcademyRepository;
 import com.aslan.academymanagement.repository.MemberRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +43,13 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
-    @Operation(summary = "회원가입 신청", description = "구글 로그인 후 추가 정보를 입력하여 가입을 신청합니다.")
+    @Operation(summary = "회원가입 신청", description = "구글 로그인 후 추가 정보를 입력하여 가입을 신청합니다. 원장(OWNER)은 가입 즉시 토큰이 발급됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "회원가입 성공 (원장은 토큰 포함)",
+                    content = @Content(schema = @Schema(implementation = SignupResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (필수 값 누락 등)"),
+            @ApiResponse(responseCode = "409", description = "이미 가입된 이메일")
+    })
     @Transactional
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
 

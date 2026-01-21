@@ -8,6 +8,7 @@ import com.aslan.academymanagement.dto.StudentResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.student.StudentManagementService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class StudentController {
     private final MemberRepository memberRepository;
 
     @PostMapping
-    @Operation(summary = "학생 등록", description = "신규 학생을 등록합니다.")
+    @Operation(summary = "학생 등록", description = "신규 학생을 등록합니다. 학번은 자동 생성됩니다.")
     public ResponseEntity<StudentResponse> registerStudent(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody StudentRequest request
@@ -41,8 +42,9 @@ public class StudentController {
     }
 
     @GetMapping("/{studentNumber}")
-    @Operation(summary = "학생 조회", description = "학번으로 학생 정보를 조회합니다.")
+    @Operation(summary = "학생 상세 조회", description = "학번(studentNumber)으로 학생 정보를 조회합니다.")
     public ResponseEntity<StudentResponse> getStudent(
+            @Parameter(description = "학번 (예: 2026A1B2)", required = true)
             @PathVariable String studentNumber
     ) {
         Student student = studentManagementService.getStudent(studentNumber);
@@ -60,7 +62,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{studentNumber}")
-    @Operation(summary = "학생 퇴원 처리", description = "학생을 퇴원 상태로 변경합니다 (논리 삭제).")
+    @Operation(summary = "학생 퇴원 처리", description = "학생을 퇴원 상태(DISCHARGED)로 변경합니다. (논리 삭제)")
     public ResponseEntity<Void> dischargeStudent(
             @PathVariable String studentNumber
     ) {
@@ -69,7 +71,7 @@ public class StudentController {
     }
 
     @GetMapping("/top")
-    @Operation(summary = "우수 학생 조회", description = "우수 학생 목록을 조회합니다.")
+    @Operation(summary = "우수 학생 조회", description = "우수 학생 목록을 조회합니다. (현재는 전체 목록 반환)")
     public ResponseEntity<List<StudentResponse>> getTopStudents() {
         List<Student> students = studentManagementService.getTopStudents();
         List<StudentResponse> responses = students.stream()

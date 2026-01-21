@@ -7,6 +7,7 @@ import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.lecture.LectureService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/lecture")
-@Tag(name = "Lecture", description = "강의 관련 API")
+@Tag(name = "Lecture", description = "강의 및 시간표 관리 API")
 @RequiredArgsConstructor
 public class LectureController {
 
@@ -30,7 +31,7 @@ public class LectureController {
     private final MemberRepository memberRepository;
 
     @PostMapping
-    @Operation(summary = "강의 생성", description = "강의 정보를 생성합니다.")
+    @Operation(summary = "강의 생성", description = "새로운 강의를 생성합니다. 기간(startDate, endDate)을 설정하지 않으면 오늘부터 3개월로 자동 설정됩니다.")
     public ResponseEntity<LectureResponse> createLecture(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody LectureRequest lectureRequest){
@@ -58,16 +59,18 @@ public class LectureController {
     }
 
     @GetMapping("/{lectureId}")
-    @Operation(summary = "강의 조회", description = "특정 id에 해당하는 강의 정보를 조회합니다.")
+    @Operation(summary = "강의 상세 조회", description = "특정 ID에 해당하는 강의 정보를 조회합니다.")
     public ResponseEntity<LectureResponse> retrieveLecture(@PathVariable Long lectureId) {
         LectureResponse response = lectureService.retrieveLecture(lectureId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/events")
-    @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다.")
+    @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다. 기간(start, end)을 지정하여 조회할 수 있습니다.")
     public ResponseEntity<List<LectureEventDto>> getLectureEvents(
+            @Parameter(description = "조회 시작일 (YYYY-MM-DD)", example = "2026-01-01")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @Parameter(description = "조회 종료일 (YYYY-MM-DD)", example = "2026-01-31")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
         List<LectureEventDto> events = lectureService.getLectureEvents(start, end);
