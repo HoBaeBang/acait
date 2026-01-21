@@ -149,13 +149,23 @@
     *   **학생 수강 정보:** `GET /api/v1/students/{id}/lectures` API 구현.
     *   **버그 수정:** `DataIntegrityViolationException` 등 주요 버그 해결.
 
+### 2026-01-21 (Day 8)
+*   **[Doc] API 문서화 마무리**
+    *   Swagger 어노테이션 추가 (`@Operation`, `@Parameter` 등)
+    *   인증 실패 처리(`JwtAuthenticationEntryPoint`) 및 Swagger JWT 인증 버튼 활성화.
+*   **[Refactor] 미사용 코드 삭제**
+    *   `DebugController`, `AttendanceCheckAspect` 등 삭제.
+*   **[Config] DB 전환 (H2 -> MySQL)**
+    *   `build.gradle` 및 `application.yml` 수정.
+
 ---
 
 ## 5. 내일 진행할 작업 (To-Do)
 
-### 2026-01-21 (Day 8)
-*   **[Doc] API 문서화 마무리**
-    *   Swagger 설정 점검 및 API 명세 최신화.
-    *   프론트엔드 팀에 최종 API 명세 전달.
+### 2026-01-22 (Day 9)
 *   **[Deploy] 배포 준비**
-    *   배포 스크립트 작성 및 환경 설정 점검.
+    *   `Dockerfile` 및 배포 스크립트(`deploy.sh`) 작성.
+    *   운영 환경용 `application-prod.yml` 설정.
+*   **[Final] 최종 코드 리뷰 및 QA**
+    *   전체 코드 리뷰 및 개선점 논의.
+    *   프론트엔드 팀과 최종 연동 테스트.
