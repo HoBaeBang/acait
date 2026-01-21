@@ -7,24 +7,25 @@ spring:
     include: secret # application-secret.yml 파일을 포함해서 로드함
 
   datasource:
-    url: jdbc:h2:mem:academydb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    # MySQL 설정 (Docker)
+    url: jdbc:mysql://localhost:3310/acait?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME} # secret 파일에 정의 (기본값: root)
+    password: ${DB_PASSWORD} # secret 파일에 정의
 
+  # H2 Console (MySQL 사용 시 비활성화 권장하지만, 로컬 테스트용으로 남겨둘 수도 있음 - 여기선 비활성화)
   h2:
     console:
-      enabled: true
-      path: /h2-console
+      enabled: false
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update # 운영 환경에서는 validate 또는 none 권장
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.MySQL8Dialect
     defer-datasource-initialization: true
 
   sql:

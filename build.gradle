@@ -52,8 +52,11 @@ dependencies {
     // Mail (JavaMailSender) - 알림 발송용
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    // DB Driver
+    // runtimeOnly 'com.h2database:h2' // H2 (개발용) - 필요 시 주석 해제
+    runtimeOnly 'com.mysql:mysql-connector-j' // MySQL (운영용)
+
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

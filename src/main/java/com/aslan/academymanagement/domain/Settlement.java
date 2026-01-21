@@ -30,7 +30,14 @@ public class Settlement {
     @JoinColumn(name = "instructor_id", nullable = false)
     private Member instructor;
 
-    @Column(name = "year_month", nullable = false, length = 7)
+    // year_month는 예약어일 수 있으므로 백틱으로 감싸거나 이름을 변경하는 것이 안전함
+    // 하지만 MySQL 8.0에서 year_month는 예약어가 아님.
+    // 에러 로그를 다시 보면 'year_month varchar(7) not null,' 부분에서 에러가 났다고 하는데,
+    // 이는 앞의 컬럼 정의에서 콤마(,)가 빠졌거나 뭔가 잘못되었을 수 있음.
+    // 하지만 코드를 보면 정상임.
+
+    // 혹시 모르니 컬럼명을 `settlement_year_month`로 변경해보겠습니다.
+    @Column(name = "settlement_year_month", nullable = false, length = 7)
     private String yearMonth; // YYYY-MM
 
     @Column(name = "total_amount")
