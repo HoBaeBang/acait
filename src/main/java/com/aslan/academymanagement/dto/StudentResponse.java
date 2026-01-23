@@ -3,6 +3,7 @@ package com.aslan.academymanagement.dto;
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.Division;
 import com.aslan.academymanagement.domain.enums.Grade;
+import com.aslan.academymanagement.domain.enums.StudentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class StudentResponse {
     private String parentEmail;
     private String memo;
     private Division division; // Grade에서 추출
+    private StudentStatus status; // 추가됨
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -41,6 +43,7 @@ public class StudentResponse {
                 .parentEmail(student.getParentEmail())
                 .memo(student.getMemo())
                 .division(student.getGrade().getDivision()) // Grade에서 Division 추출
+                .status(student.getStatus()) // 추가됨
                 .createdAt(student.getCreatedAt())
                 .updatedAt(student.getUpdatedAt())
                 .build();
