@@ -38,7 +38,7 @@ public class SettlementServiceImpl implements SettlementService {
     private final SettlementRepository settlementRepository;
     private final LectureRecordRepository lectureRecordRepository;
     private final LectureStudentRepository lectureStudentRepository;
-    private final LectureRepository lectureRepository; // 추가
+    private final LectureRepository lectureRepository;
 
     @Override
     public void calculateMonthlySettlement(String yearMonth) {
@@ -208,48 +208,35 @@ public class SettlementServiceImpl implements SettlementService {
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
 
-        // 조회하는 달이 과거라면 예정 금액은 0원
         if (endDate.isBefore(today)) {
-            return SettlementForecastResponse.builder()
-                    .confirmedAmount(confirmedAmount)
-                    .expectedAmount(BigDecimal.ZERO)
-                    .totalForecast(confirmedAmount)
-                    .build();
+            return buildForecastResponse(confirmedAmount, BigDecimal.ZERO);
         }
 
-        // 남은 기간(내일 ~ 말일) 설정
         LocalDate forecastStart = today.plusDays(1);
         if (forecastStart.isBefore(startDate)) {
-            forecastStart = startDate; // 미래의 달을 조회하는 경우 1일부터 시작
+            forecastStart = startDate;
         }
 
-        // 강사의 모든 강의 조회
         List<Lecture> lectures = lectureRepository.findAllByTeacher(instructor);
 
         for (Lecture lecture : lectures) {
-            // 강의가 활성 상태이고, 기간 내에 있는지 확인
             if (!lecture.getIsActive()) continue;
             
-            // 수강생 수 조회
             long studentCount = lectureStudentRepository.countByLecture(lecture);
             if (studentCount == 0) continue;
 
-            // 남은 기간 동안의 수업 횟수 계산
             long classCount = 0;
             for (LocalDate date = forecastStart; !date.isAfter(endDate); date = date.plusDays(1)) {
-                // 강의 기간 체크
                 if (date.isBefore(lecture.getStartDate()) || date.isAfter(lecture.getEndDate())) continue;
 
-                // 요일 체크
                 for (Schedule schedule : lecture.getSchedules()) {
                     if (schedule.getDayOfWeek() == date.getDayOfWeek()) {
                         classCount++;
-                        break; // 하루에 한 번만 카운트 (같은 요일에 스케줄이 여러 개일 수도 있으므로)
+                        break;
                     }
                 }
             }
 
-            // 예정 금액 += 수업 횟수 * 수강생 수 * 단가
             BigDecimal lectureExpected = lecture.getDefaultPrice()
                     .multiply(BigDecimal.valueOf(classCount))
                     .multiply(BigDecimal.valueOf(studentCount));
@@ -257,10 +244,23 @@ public class SettlementServiceImpl implements SettlementService {
             expectedAmount = expectedAmount.add(lectureExpected);
         }
 
+        return buildForecastResponse(confirmedAmount, expectedAmount);
+    }
+
+    private SettlementForecastResponse buildForecastResponse(BigDecimal confirmed, BigDecimal expected) {
+        BigDecimal total = confirmed.add(expected);
+        
+        // 세금 계산 (3.3%)
+        BigDecimal taxRate = new BigDecimal("0.033");
+        BigDecimal tax = total.multiply(taxRate).setScale(0, java.math.RoundingMode.FLOOR);
+        BigDecimal real = total.subtract(tax);
+
         return SettlementForecastResponse.builder()
-                .confirmedAmount(confirmedAmount)
-                .expectedAmount(expectedAmount)
-                .totalForecast(confirmedAmount.add(expectedAmount))
+                .confirmedAmount(confirmed)
+                .expectedAmount(expected)
+                .totalAmount(total)
+                .taxAmount(tax)
+                .realAmount(real)
                 .build();
     }
 
