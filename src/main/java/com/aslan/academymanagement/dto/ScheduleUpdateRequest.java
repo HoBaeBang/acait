@@ -28,4 +28,7 @@ public class ScheduleUpdateRequest {
 
     @Schema(description = "변경 대상 날짜 (INSTANCE일 때 필수)", example = "2026-01-15")
     private LocalDate targetDate;
+
+    @Schema(description = "변경된 날짜 (날짜 자체를 변경할 때 사용)", example = "2026-01-16")
+    private LocalDate newDate; // 추가: 날짜 변경 지원
 }
