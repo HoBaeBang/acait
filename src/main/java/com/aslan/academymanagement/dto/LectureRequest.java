@@ -23,9 +23,10 @@ public class LectureRequest {
     private Subject subject;
     private BigDecimal defaultPrice;
     private Integer defaultDuration;
-    private LocalDate startDate; // 추가
-    private LocalDate endDate;   // 추가
+    private LocalDate startDate;
+    private LocalDate endDate;
     private List<ScheduleRequest> schedules;
+    private List<Long> studentIds; // 추가: 동시 배정할 학생 ID 목록
 
     public Lecture toLecture() {
         return Lecture.builder()

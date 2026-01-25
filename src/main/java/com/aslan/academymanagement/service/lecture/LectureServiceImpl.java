@@ -1,13 +1,14 @@
 package com.aslan.academymanagement.service.lecture;
 
 import com.aslan.academymanagement.annotation.Loggable;
-import com.aslan.academymanagement.domain.Lecture;
-import com.aslan.academymanagement.domain.Member;
-import com.aslan.academymanagement.domain.Schedule;
+import com.aslan.academymanagement.domain.*;
 import com.aslan.academymanagement.dto.LectureEventDto;
 import com.aslan.academymanagement.dto.LectureRequest;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.repository.LectureRepository;
+import com.aslan.academymanagement.repository.LectureStudentRepository;
+import com.aslan.academymanagement.repository.ScheduleExceptionRepository;
+import com.aslan.academymanagement.repository.StudentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ import java.util.stream.Collectors;
 public class LectureServiceImpl implements LectureService {
 
     private final LectureRepository lectureRepository;
+    private final StudentRepository studentRepository;
+    private final LectureStudentRepository lectureStudentRepository;
+    private final ScheduleExceptionRepository scheduleExceptionRepository;
 
     @Transactional
     @Loggable
@@ -47,6 +51,20 @@ public class LectureServiceImpl implements LectureService {
             lecture.addSchedule(schedule);
         }
         Lecture saved = lectureRepository.save(lecture);
+
+        if (req.getStudentIds() != null && !req.getStudentIds().isEmpty()) {
+            List<Student> students = studentRepository.findAllById(req.getStudentIds());
+            for (Student student : students) {
+                if (!lectureStudentRepository.existsByLectureAndStudent(saved, student)) {
+                    LectureStudent lectureStudent = LectureStudent.builder()
+                            .lecture(saved)
+                            .student(student)
+                            .build();
+                    lectureStudentRepository.save(lectureStudent);
+                }
+            }
+        }
+
         saved.getSchedules().size();
 
         return LectureResponse.from(saved);
@@ -83,16 +101,17 @@ public class LectureServiceImpl implements LectureService {
     @Transactional
     @Override
     public List<LectureEventDto> getLectureEvents(LocalDate start, LocalDate end) {
-        // 조회 기간이 없으면 이번 주 월~일로 설정
         if (start == null) start = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         if (end == null) end = start.plusDays(6);
 
         LocalDate finalStart = start;
         LocalDate finalEnd = end;
 
-        // 모든 강의를 가져와서, 요청된 기간(start~end)에 해당하는 반복 일정만 생성하여 반환
+        // 해당 기간의 예외 사항 조회
+        List<ScheduleException> exceptions = scheduleExceptionRepository.findByOriginalDateBetween(finalStart, finalEnd);
+
         return lectureRepository.findAll().stream()
-                .flatMap(lecture -> LectureEventDto.from(lecture, finalStart, finalEnd).stream())
+                .flatMap(lecture -> LectureEventDto.from(lecture, finalStart, finalEnd, exceptions).stream())
                 .collect(Collectors.toList());
     }
 }
