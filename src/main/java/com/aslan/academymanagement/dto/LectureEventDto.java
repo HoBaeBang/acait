@@ -39,6 +39,7 @@ public class LectureEventDto {
         }
 
         // 예외 사항을 Map으로 변환 (Key: ScheduleID + OriginalDate)
+        // 주의: ScheduleException의 schedule이 Lazy Loading일 수 있으므로 ID만 추출
         Map<String, ScheduleException> exceptionMap = exceptions.stream()
                 .collect(Collectors.toMap(
                         ex -> ex.getSchedule().getId() + "_" + ex.getOriginalDate(),
@@ -52,10 +53,10 @@ public class LectureEventDto {
                     
                     // 예외 사항 체크
                     String key = schedule.getId() + "_" + date;
-
+                    
                     if (exceptionMap.containsKey(key)) {
                         ScheduleException ex = exceptionMap.get(key);
-                        log.info("⚡️ 예외 일정 발견: {} (원래 날짜: {}) -> 변경 날짜: {}", key, ex.getOriginalDate(), ex.getNewDate());
+                        log.info("⚡️ 예외 일정 적용: {} (원래 날짜: {}) -> 변경 날짜: {}", key, ex.getOriginalDate(), ex.getNewDate());
 
                         if (ex.isCancelled()) {
                             log.info("🚫 휴강 처리됨: {}", key);
