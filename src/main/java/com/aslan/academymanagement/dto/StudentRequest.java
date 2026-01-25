@@ -2,12 +2,15 @@ package com.aslan.academymanagement.dto;
 
 import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.Grade;
+import com.aslan.academymanagement.domain.enums.StudentStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -35,6 +38,10 @@ public class StudentRequest {
 
     private String memo;
 
+    // 상태 변경을 위한 필드 추가
+    private StudentStatus status;
+    private LocalDate dischargeDate;
+
     public Student toEntity() {
         return Student.builder()
                 .name(name)
@@ -44,6 +51,8 @@ public class StudentRequest {
                 .parentPhone(parentPhone)
                 .parentEmail(parentEmail)
                 .memo(memo)
+                .status(status) // 추가
+                .dischargeDate(dischargeDate) // 추가
                 .build();
     }
 }

@@ -84,6 +84,14 @@ public class StudentServiceImpl implements StudentManagementService {
         student.setParentEmail(request.getParentEmail());
         student.setMemo(request.getMemo());
 
+        // 상태 변경 로직 추가 (퇴원 처리 등)
+        if (request.getStatus() != null) {
+            student.setStatus(request.getStatus());
+        }
+        if (request.getDischargeDate() != null) {
+            student.setDischargeDate(request.getDischargeDate());
+        }
+
         return studentRepository.save(student);
     }
 
