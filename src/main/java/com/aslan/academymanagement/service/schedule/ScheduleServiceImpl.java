@@ -43,6 +43,9 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new IllegalArgumentException("INSTANCE 변경 시 대상 날짜(targetDate)는 필수입니다.");
         }
 
+        log.info("🔍 [DEBUG] ScheduleUpdateRequest - targetDate: {}, newDate: {}, startTime: {}, endTime: {}",
+                request.getTargetDate(), request.getNewDate(), request.getStartTime(), request.getEndTime());
+
         // ScheduleException 생성 및 저장
         ScheduleException exception = ScheduleException.builder()
                 .schedule(schedule)
@@ -55,8 +58,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         scheduleExceptionRepository.save(exception);
         
-        log.info("📅 [INSTANCE] {} 날짜의 스케줄을 {}-{}로 변경합니다. (예외 등록)",
-                request.getTargetDate(), request.getStartTime(), request.getEndTime());
+        log.info("📅 [INSTANCE] 예외 등록 완료 - Original: {} -> New: {} {}-{}",
+                exception.getOriginalDate(), exception.getNewDate(), exception.getNewStartTime(), exception.getNewEndTime());
     }
 
     private void updateSeries(Schedule schedule, ScheduleUpdateRequest request) {
