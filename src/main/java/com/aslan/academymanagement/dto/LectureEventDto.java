@@ -39,7 +39,6 @@ public class LectureEventDto {
         }
 
         // 예외 사항을 Map으로 변환 (Key: ScheduleID + OriginalDate)
-        // 주의: ScheduleException의 schedule이 Lazy Loading일 수 있으므로 ID만 추출
         Map<String, ScheduleException> exceptionMap = exceptions.stream()
                 .collect(Collectors.toMap(
                         ex -> ex.getSchedule().getId() + "_" + ex.getOriginalDate(),
@@ -87,6 +86,13 @@ public class LectureEventDto {
         Map<String, Object> props = new HashMap<>();
         props.put("instructor", lecture.getTeacher().getName());
         props.put("lectureId", lecture.getId());
+        props.put("lectureName", lecture.getName()); // 추가: 강의명
+        
+        // 학생 이름 목록 추가
+        List<String> studentNames = lecture.getLectureStudents().stream()
+                .map(ls -> ls.getStudent().getName())
+                .collect(Collectors.toList());
+        props.put("studentNames", studentNames);
 
         events.add(LectureEventDto.builder()
                 .id(String.valueOf(schedule.getId()))
