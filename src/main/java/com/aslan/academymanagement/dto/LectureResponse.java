@@ -21,13 +21,14 @@ import java.util.stream.Collectors;
 public class LectureResponse {
     private Long id;
     private String name;
+    private String instructorName; // 추가: 강사 이름
     private LectureType type;
     private Subject subject;
     private BigDecimal defaultPrice;
     private Integer defaultDuration;
     private Boolean isActive;
-    private LocalDate startDate; // 추가
-    private LocalDate endDate;   // 추가
+    private LocalDate startDate;
+    private LocalDate endDate;
     private List<ScheduleResponse> schedules;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -36,13 +37,14 @@ public class LectureResponse {
         return LectureResponse.builder()
                 .id(lecture.getId())
                 .name(lecture.getName())
+                .instructorName(lecture.getTeacher().getName()) // 매핑
                 .type(lecture.getType())
                 .subject(lecture.getSubject())
                 .defaultPrice(lecture.getDefaultPrice())
                 .defaultDuration(lecture.getDefaultDuration())
                 .isActive(lecture.getIsActive())
-                .startDate(lecture.getStartDate()) // 추가
-                .endDate(lecture.getEndDate())     // 추가
+                .startDate(lecture.getStartDate())
+                .endDate(lecture.getEndDate())
                 .schedules(lecture.getSchedules().stream()
                         .map(ScheduleResponse::from)
                         .collect(Collectors.toList()))
