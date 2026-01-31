@@ -70,6 +70,11 @@ public class Lecture {
     @Builder.Default
     private List<Schedule> schedules = new ArrayList<>();
 
+    // 양방향 매핑 추가 (수강생 목록 조회용)
+    @OneToMany(mappedBy = "lecture", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<LectureStudent> lectureStudents = new ArrayList<>();
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
