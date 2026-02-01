@@ -66,14 +66,18 @@ public class LectureController {
     }
 
     @GetMapping("/events")
-    @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다. 기간(start, end)을 지정하여 조회할 수 있습니다.")
+    @Operation(summary = "달력용 강의 이벤트 조회", description = "FullCalendar에 표시할 강의 스케줄 데이터를 반환합니다. 기간(start, end) 및 강사(instructorId)를 지정하여 조회할 수 있습니다.")
     public ResponseEntity<List<LectureEventDto>> getLectureEvents(
+            @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "조회 시작일 (YYYY-MM-DD)", example = "2026-01-01")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @Parameter(description = "조회 종료일 (YYYY-MM-DD)", example = "2026-01-31")
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @Parameter(description = "강사 ID (원장용 필터링)", example = "1")
+            @RequestParam(required = false) Long instructorId
     ) {
-        List<LectureEventDto> events = lectureService.getLectureEvents(start, end);
+        Member loginUser = getMember(userDetails);
+        List<LectureEventDto> events = lectureService.getLectureEvents(loginUser, start, end, instructorId);
         return ResponseEntity.ok(events);
     }
 
