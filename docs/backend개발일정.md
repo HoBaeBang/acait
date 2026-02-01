@@ -1,6 +1,6 @@
 # 📅 ACAIT 백엔드 개발 일정 (v5.0 반영)
 
-> **작성일:** 2026-01-21  
+> **작성일:** 2026-01-22  
 > **기준 문서:** [요구사항명세서_v5.md](./요구사항명세서_v5.md)  
 > **작성자:** Backend Team
 
@@ -17,6 +17,7 @@
 *   **교재/엑셀/알림:** 긴급 추가된 기능 구현 완료.
 *   **통합 테스트:** 주요 시나리오 검증 및 버그 수정 완료.
 *   **문서화:** Swagger 설정 최신화 완료.
+*   **예외 처리:** Global Exception Handling 적용 완료.
 
 **⚠️ 주요 변경 필요 사항 (Gap Analysis):**
 *   현재 모든 주요 기능 구현 및 테스트가 완료되었습니다.
@@ -158,11 +159,20 @@
 *   **[Config] DB 전환 (H2 -> MySQL)**
     *   `build.gradle` 및 `application.yml` 수정.
 
+### 2026-01-22 (Day 9)
+*   **[Refactor] 예외 처리 고도화**
+    *   `GlobalExceptionHandler`, `ErrorCode`, `BusinessException` 도입.
+    *   `IllegalArgumentException` 등을 커스텀 예외로 리팩토링.
+*   **[Fix] 정산 및 학생 조회 버그 수정**
+    *   `SettlementForecastResponse`에 세금 정보 추가.
+    *   `LectureResponse`에 기간 정보(`startDate`, `endDate`) 추가.
+    *   학생 상세 조회 시 `NaN` 오류 대응 가이드.
+
 ---
 
 ## 5. 내일 진행할 작업 (To-Do)
 
-### 2026-01-22 (Day 9)
+### 2026-01-23 (Day 10)
 *   **[Deploy] 배포 준비**
     *   `Dockerfile` 및 배포 스크립트(`deploy.sh`) 작성.
     *   운영 환경용 `application-prod.yml` 설정.
