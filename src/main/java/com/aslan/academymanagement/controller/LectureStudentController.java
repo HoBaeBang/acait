@@ -5,6 +5,7 @@ import com.aslan.academymanagement.dto.StudentResponse;
 import com.aslan.academymanagement.repository.MemberRepository;
 import com.aslan.academymanagement.service.lecture.LectureStudentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,27 +24,29 @@ public class LectureStudentController {
     private final LectureStudentService lectureStudentService;
     private final MemberRepository memberRepository;
 
-    @PostMapping("/{lectureId}/students/{studentId}")
-    @Operation(summary = "강의에 학생 등록", description = "특정 강의에 학생을 등록합니다.")
+    @PostMapping("/{lectureId}/students/{studentNumber}")
+    @Operation(summary = "강의에 학생 등록", description = "특정 강의에 학생을 등록합니다. (학번 사용)")
     public ResponseEntity<Void> registerStudent(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long lectureId,
-            @PathVariable Long studentId) {
+            @Parameter(description = "학번 (예: 20263FE2)")
+            @PathVariable String studentNumber) {
 
         Member teacher = getMember(userDetails);
-        lectureStudentService.registerStudent(teacher, lectureId, studentId);
+        lectureStudentService.registerStudent(teacher, lectureId, studentNumber);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{lectureId}/students/{studentId}")
-    @Operation(summary = "강의에서 학생 제외", description = "특정 강의에서 학생 등록을 취소합니다.")
+    @DeleteMapping("/{lectureId}/students/{studentNumber}")
+    @Operation(summary = "강의에서 학생 제외", description = "특정 강의에서 학생 등록을 취소합니다. (학번 사용)")
     public ResponseEntity<Void> removeStudent(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long lectureId,
-            @PathVariable Long studentId) {
+            @Parameter(description = "학번 (예: 20263FE2)")
+            @PathVariable String studentNumber) {
 
         Member teacher = getMember(userDetails);
-        lectureStudentService.removeStudent(teacher, lectureId, studentId);
+        lectureStudentService.removeStudent(teacher, lectureId, studentNumber);
         return ResponseEntity.ok().build();
     }
 
@@ -62,7 +65,6 @@ public class LectureStudentController {
         if (userDetails == null) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
         }
-        // findByEmail -> findByGoogleEmail 변경
         return memberRepository.findByGoogleEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
     }

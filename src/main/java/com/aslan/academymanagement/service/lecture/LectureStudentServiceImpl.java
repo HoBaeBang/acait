@@ -25,13 +25,13 @@ public class LectureStudentServiceImpl implements LectureStudentService {
     private final LectureStudentRepository lectureStudentRepository;
 
     @Override
-    public void registerStudent(Member teacher, Long lectureId, Long studentId) {
+    public void registerStudent(Member teacher, Long lectureId, String studentNumber) {
         // 1. 강의 조회 및 권한 확인
         Lecture lecture = getLectureWithAuth(teacher, lectureId);
 
-        // 2. 학생 조회
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 학생이 없습니다. id=" + studentId));
+        // 2. 학생 조회 (학번으로 조회)
+        Student student = studentRepository.findByStudentNumber(studentNumber)
+                .orElseThrow(() -> new IllegalArgumentException("해당 학생이 없습니다. 학번=" + studentNumber));
 
         // 3. 중복 등록 확인
         if (lectureStudentRepository.existsByLectureAndStudent(lecture, student)) {
@@ -48,13 +48,13 @@ public class LectureStudentServiceImpl implements LectureStudentService {
     }
 
     @Override
-    public void removeStudent(Member teacher, Long lectureId, Long studentId) {
+    public void removeStudent(Member teacher, Long lectureId, String studentNumber) {
         // 1. 강의 조회 및 권한 확인
         Lecture lecture = getLectureWithAuth(teacher, lectureId);
 
-        // 2. 학생 조회
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 학생이 없습니다. id=" + studentId));
+        // 2. 학생 조회 (학번으로 조회)
+        Student student = studentRepository.findByStudentNumber(studentNumber)
+                .orElseThrow(() -> new IllegalArgumentException("해당 학생이 없습니다. 학번=" + studentNumber));
 
         // 3. 등록 정보 조회
         LectureStudent lectureStudent = lectureStudentRepository.findByLectureAndStudent(lecture, student)
