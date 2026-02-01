@@ -18,5 +18,5 @@ public interface LectureService {
     LectureResponse retrieveLecture(Long lectureId);
 
     // 기간별 달력 데이터 조회 (권한 및 필터링 적용)
-    List<LectureEventDto> getLectureEvents(Member loginUser, LocalDate start, LocalDate end, Long instructorId);
+    List<LectureEventDto> getLectureEvents(Member loginUser, LocalDate start, LocalDate end, Long instructorId, Boolean viewAll);
 }

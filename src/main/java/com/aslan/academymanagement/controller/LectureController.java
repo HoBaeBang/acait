@@ -74,10 +74,12 @@ public class LectureController {
             @Parameter(description = "조회 종료일 (YYYY-MM-DD)", example = "2026-01-31")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
             @Parameter(description = "강사 ID (원장용 필터링)", example = "1")
-            @RequestParam(required = false) Long instructorId
+            @RequestParam(required = false) Long instructorId,
+            @Parameter(description = "전체 조회 여부 (원장용)", example = "true")
+            @RequestParam(required = false) Boolean viewAll
     ) {
         Member loginUser = getMember(userDetails);
-        List<LectureEventDto> events = lectureService.getLectureEvents(loginUser, start, end, instructorId);
+        List<LectureEventDto> events = lectureService.getLectureEvents(loginUser, start, end, instructorId, viewAll);
         return ResponseEntity.ok(events);
     }
 

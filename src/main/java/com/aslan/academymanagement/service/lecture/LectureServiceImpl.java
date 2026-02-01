@@ -23,7 +23,7 @@ public class LectureServiceImpl implements LectureService {
     private final StudentRepository studentRepository;
     private final LectureStudentRepository lectureStudentRepository;
     private final ScheduleExceptionRepository scheduleExceptionRepository;
-    private final MemberRepository memberRepository; // 강사 조회용
+    private final MemberRepository memberRepository;
 
     @Transactional
     @Loggable
@@ -99,7 +99,7 @@ public class LectureServiceImpl implements LectureService {
 
     @Transactional
     @Override
-    public List<LectureEventDto> getLectureEvents(Member loginUser, LocalDate start, LocalDate end, Long instructorId) {
+    public List<LectureEventDto> getLectureEvents(Member loginUser, LocalDate start, LocalDate end, Long instructorId, Boolean viewAll) {
         if (start == null) start = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         if (end == null) end = start.plusDays(6);
 
@@ -108,34 +108,32 @@ public class LectureServiceImpl implements LectureService {
 
         List<Lecture> lectures;
 
-        // 권한별 조회 로직 분기
-        if (loginUser.getRole() == Role.ROLE_INSTRUCTOR) {
-            // 강사는 본인의 강의만 조회
-            lectures = lectureRepository.findAllByTeacher(loginUser);
-        } else if (loginUser.getRole() == Role.ROLE_OWNER) {
-            // 원장은 선택한 강사 또는 전체 조회
-            if (instructorId != null) {
-                Member instructor = memberRepository.findById(instructorId)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 강사가 없습니다."));
-                
-                // 해당 강사가 우리 학원 소속인지 체크
-                if (!instructor.getAcademy().getId().equals(loginUser.getAcademy().getId())) {
-                    throw new IllegalArgumentException("다른 학원의 강사입니다.");
-                }
-                
-                lectures = lectureRepository.findAllByTeacher(instructor);
-            } else {
-                // 전체 조회 (우리 학원의 모든 강의)
-                // 현재 findAll()은 모든 학원의 강의를 가져오므로, 학원별 필터링이 필요함.
-                // 하지만 LectureRepository에 findAllByAcademy가 없으므로, 
-                // 임시로 findAll() 후 stream filter 적용 (추후 Repository 메서드 추가 권장)
-                lectures = lectureRepository.findAll().stream()
-                        .filter(l -> l.getAcademy().getId().equals(loginUser.getAcademy().getId()))
-                        .collect(Collectors.toList());
+        // 1. instructorId가 있으면 해당 강사로 필터링 (원장만 가능)
+        if (instructorId != null) {
+            if (loginUser.getRole() != Role.ROLE_OWNER) {
+                throw new IllegalArgumentException("다른 강사의 일정을 조회할 권한이 없습니다.");
             }
-        } else {
-            // 그 외 권한 (슈퍼 어드민 등)은 일단 빈 리스트
-            return List.of();
+            Member instructor = memberRepository.findById(instructorId)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 강사가 없습니다."));
+            
+            if (!instructor.getAcademy().getId().equals(loginUser.getAcademy().getId())) {
+                throw new IllegalArgumentException("다른 학원의 강사입니다.");
+            }
+            lectures = lectureRepository.findAllByTeacher(instructor);
+        }
+        // 2. viewAll=true이면 전체 조회 (원장만 가능)
+        else if (Boolean.TRUE.equals(viewAll)) {
+            if (loginUser.getRole() != Role.ROLE_OWNER) {
+                throw new IllegalArgumentException("전체 일정을 조회할 권한이 없습니다.");
+            }
+            // 학원 전체 강의 조회
+            lectures = lectureRepository.findAll().stream()
+                    .filter(l -> l.getAcademy().getId().equals(loginUser.getAcademy().getId()))
+                    .collect(Collectors.toList());
+        }
+        // 3. 그 외의 경우 (기본값): 로그인한 사용자(본인)의 강의 조회
+        else {
+            lectures = lectureRepository.findAllByTeacher(loginUser);
         }
 
         // 해당 기간의 예외 사항 조회
