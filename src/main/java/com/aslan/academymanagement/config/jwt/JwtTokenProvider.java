@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
-    private static final String ACADEMY_ID_KEY = "academyId"; // 추가
+    private static final String ACADEMY_ID_KEY = "academyId";
+    private static final String MEMBER_ID_KEY = "memberId"; // 추가
+    private static final String NAME_KEY = "name"; // 추가
     private final Key key;
     private final long accessTokenValidityInMilliseconds;
 
@@ -51,11 +53,18 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS512)
                 .setExpiration(validity);
 
-        // CustomUserDetails인 경우 academyId 추가
+        // CustomUserDetails인 경우 추가 정보(academyId, memberId, name) 포함
         if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            
             if (userDetails.getAcademyId() != null) {
                 builder.claim(ACADEMY_ID_KEY, userDetails.getAcademyId());
+            }
+            
+            // memberId와 name 추가
+            if (userDetails.getMember() != null) {
+                builder.claim(MEMBER_ID_KEY, userDetails.getMember().getId());
+                builder.claim(NAME_KEY, userDetails.getMember().getName());
             }
         }
 
