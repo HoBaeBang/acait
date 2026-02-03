@@ -42,8 +42,20 @@ public class SettlementServiceImpl implements SettlementService {
 
     @Override
     public void calculateMonthlySettlement(String yearMonth) {
-        log.info("💰 {} 월 정산 계산 시작", yearMonth);
+        log.info("💰 {} 월 정산 계산 시작 (전체)", yearMonth);
+        // 기존 로직 (전체 정산)
+        calculateSettlementInternal(yearMonth, null);
+    }
 
+    @Override
+    public void calculateMySettlement(Member instructor, String yearMonth) {
+        log.info("💰 {} 월 정산 계산 시작 (강사: {})", yearMonth, instructor.getName());
+        // 강사 본인 정산
+        calculateSettlementInternal(yearMonth, instructor);
+    }
+
+    // 공통 정산 로직
+    private void calculateSettlementInternal(String yearMonth, Member targetInstructor) {
         YearMonth ym = YearMonth.parse(yearMonth);
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
@@ -54,11 +66,23 @@ public class SettlementServiceImpl implements SettlementService {
                 AttendanceStatus.MAKEUP
         );
 
-        List<LectureRecord> records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses);
+        // 1. 정산 대상 수업 기록 조회
+        List<LectureRecord> records;
+        if (targetInstructor != null) {
+            // 특정 강사의 기록만 조회 (Repository 메서드 추가 필요하지만, 일단 전체 조회 후 필터링하거나 쿼리 추가)
+            // 성능을 위해 쿼리 추가가 좋지만, 여기서는 기존 메서드 활용 후 필터링
+            records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses).stream()
+                    .filter(r -> r.getLecture().getTeacher().getId().equals(targetInstructor.getId()))
+                    .collect(Collectors.toList());
+        } else {
+            records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses);
+        }
 
+        // 2. 강사별 그룹화
         Map<Member, List<LectureRecord>> recordsByInstructor = records.stream()
                 .collect(Collectors.groupingBy(record -> record.getLecture().getTeacher()));
 
+        // 3. 계산 및 저장
         for (Map.Entry<Member, List<LectureRecord>> entry : recordsByInstructor.entrySet()) {
             Member instructor = entry.getKey();
             List<LectureRecord> instructorRecords = entry.getValue();

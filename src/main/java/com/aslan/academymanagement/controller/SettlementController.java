@@ -33,20 +33,23 @@ public class SettlementController {
     private final MemberRepository memberRepository;
 
     @PostMapping("/calculate")
-    @Operation(summary = "월별 정산 실행 (원장용)", description = "특정 월의 정산을 수동으로 실행합니다. (수업 기록 집계 -> 정산 데이터 생성)")
+    @Operation(summary = "월별 정산 실행", description = "특정 월의 정산을 실행합니다. (원장: 전체, 강사: 본인)")
     public ResponseEntity<String> calculateSettlement(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "정산 월 (YYYY-MM)", example = "2026-01")
             @RequestParam String yearMonth) {
 
-        Member admin = getMember(userDetails);
+        Member member = getMember(userDetails);
 
-        if (admin.getRole() != Role.ROLE_OWNER) {
+        if (member.getRole() == Role.ROLE_OWNER) {
+            settlementService.calculateMonthlySettlement(yearMonth);
+            return ResponseEntity.ok(yearMonth + " 전체 정산이 완료되었습니다.");
+        } else if (member.getRole() == Role.ROLE_INSTRUCTOR) {
+            settlementService.calculateMySettlement(member, yearMonth);
+            return ResponseEntity.ok(yearMonth + " 정산이 완료되었습니다.");
+        } else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("정산 실행 권한이 없습니다.");
         }
-
-        settlementService.calculateMonthlySettlement(yearMonth);
-        return ResponseEntity.ok(yearMonth + " 정산이 완료되었습니다.");
     }
 
     @GetMapping("/dashboard")

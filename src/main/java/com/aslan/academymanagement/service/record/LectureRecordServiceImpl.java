@@ -68,6 +68,7 @@ public class LectureRecordServiceImpl implements LectureRecordService {
 
         // 5. 수업 기록 저장
         LectureRecord record = LectureRecord.builder()
+                .academy(lecture.getAcademy()) // 학원 정보 설정 (필수!)
                 .lecture(lecture)
                 .student(student)
                 .date(request.getDate())

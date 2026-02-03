@@ -11,6 +11,9 @@ import java.util.List;
 public interface SettlementService {
     void calculateMonthlySettlement(String yearMonth);
 
+    // 강사 본인의 정산 실행
+    void calculateMySettlement(Member instructor, String yearMonth);
+
     List<SettlementResponse> getMonthlySettlements(Member admin, String yearMonth);
 
     List<SettlementResponse> getMySettlements(Member instructor, String yearMonth);
@@ -19,6 +22,5 @@ public interface SettlementService {
 
     List<SettlementDetailResponse> getSettlementDetails(Member member, Long settlementId);
 
-    // 예상 정산 금액 조회
     SettlementForecastResponse getSettlementForecast(Member instructor, String yearMonth);
 }
