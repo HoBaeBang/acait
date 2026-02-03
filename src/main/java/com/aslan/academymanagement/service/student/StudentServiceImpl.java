@@ -6,6 +6,7 @@ import com.aslan.academymanagement.domain.Academy;
 import com.aslan.academymanagement.domain.Lecture;
 import com.aslan.academymanagement.domain.Member;
 import com.aslan.academymanagement.domain.Student;
+import com.aslan.academymanagement.domain.enums.Role;
 import com.aslan.academymanagement.domain.enums.StudentStatus;
 import com.aslan.academymanagement.dto.LectureResponse;
 import com.aslan.academymanagement.dto.StudentRequest;
@@ -130,9 +131,20 @@ public class StudentServiceImpl implements StudentManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StudentResponse> getAllStudents(Member teacher) {
-        Academy academy = teacher.getAcademy();
-        return studentRepository.findAllByAcademy(academy).stream()
+    public List<StudentResponse> getAllStudents(Member loginUser) {
+        List<Student> students;
+
+        if (loginUser.getRole() == Role.ROLE_OWNER) {
+            // 원장은 학원 전체 학생 조회
+            students = studentRepository.findAllByAcademy(loginUser.getAcademy());
+        } else if (loginUser.getRole() == Role.ROLE_INSTRUCTOR) {
+            // 강사는 본인의 수강생만 조회
+            students = studentRepository.findAllByTeacher(loginUser);
+        } else {
+            return List.of(); // 그 외 권한은 빈 리스트
+        }
+
+        return students.stream()
                 .map(StudentResponse::from)
                 .collect(Collectors.toList());
     }
