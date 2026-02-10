@@ -95,6 +95,10 @@ public class Member {
         this.approvedAt = LocalDateTime.now();
     }
 
+    public void updateRole(Role newRole) {
+        this.role = newRole;
+    }
+
     public String getRoleKey() {
         return this.role.getKey();
     }
