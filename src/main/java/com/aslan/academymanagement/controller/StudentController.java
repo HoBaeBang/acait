@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,7 @@ public class StudentController {
     private final MemberRepository memberRepository;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "학생 등록", description = "신규 학생을 등록합니다. 학번은 자동 생성됩니다.")
     public ResponseEntity<StudentResponse> registerStudent(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -42,6 +44,7 @@ public class StudentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "전체 학생 목록 조회", description = "학원 내 등록된 모든 학생 목록을 조회합니다.")
     public ResponseEntity<List<StudentResponse>> getAllStudents(
             @AuthenticationPrincipal UserDetails userDetails
@@ -52,6 +55,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentNumber}")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "학생 상세 조회", description = "학번(studentNumber)으로 학생 정보를 조회합니다.")
     public ResponseEntity<StudentResponse> getStudent(
             @Parameter(description = "학번 (예: 2026A1B2)", required = true)
@@ -62,6 +66,7 @@ public class StudentController {
     }
 
     @PutMapping("/{studentNumber}")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "학생 정보 수정", description = "학생 정보를 수정합니다.")
     public ResponseEntity<StudentResponse> updateStudent(
             @PathVariable String studentNumber,
@@ -72,6 +77,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{studentNumber}")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')") // 강사는 삭제 불가
     @Operation(summary = "학생 퇴원 처리", description = "학생을 퇴원 상태(DISCHARGED)로 변경합니다. (논리 삭제)")
     public ResponseEntity<Void> dischargeStudent(
             @PathVariable String studentNumber
@@ -81,6 +87,7 @@ public class StudentController {
     }
 
     @GetMapping("/top")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "우수 학생 조회", description = "우수 학생 목록을 조회합니다. (현재는 전체 목록 반환)")
     public ResponseEntity<List<StudentResponse>> getTopStudents() {
         List<Student> students = studentManagementService.getTopStudents();
@@ -92,6 +99,7 @@ public class StudentController {
     }
 
     @GetMapping("/{studentNumber}/lectures")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'INSTRUCTOR')")
     @Operation(summary = "학생 수강 강의 조회", description = "특정 학생이 수강 중인 강의 목록을 조회합니다.")
     public ResponseEntity<List<LectureResponse>> getEnrolledLectures(
             @PathVariable String studentNumber
