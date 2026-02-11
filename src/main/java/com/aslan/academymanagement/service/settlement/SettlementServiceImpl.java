@@ -33,7 +33,8 @@ public class SettlementServiceImpl implements SettlementService {
     private final LectureRecordRepository lectureRecordRepository;
     private final LectureStudentRepository lectureStudentRepository;
     private final LectureRepository lectureRepository;
-    private final DeductionItemRepository deductionItemRepository; // 추가
+    private final DeductionItemRepository deductionItemRepository;
+    private final StudentBalanceRepository studentBalanceRepository; // 추가
 
     @Override
     public void calculateMonthlySettlement(String yearMonth) {
@@ -92,6 +93,17 @@ public class SettlementServiceImpl implements SettlementService {
                     continue;
                 }
 
+                // [수강료 이월 로직 적용]
+                // 학생의 잔액이 충분한지 확인하고 정산 금액에 반영해야 함.
+                // 하지만 현재 구조상 강사 정산은 '수업 횟수 * 단가'로 계산되고 있음.
+                // 수강료 납부 여부와 관계없이 강사에게 정산해주는 구조라면 기존 로직 유지.
+                // 만약 '납부된 수강료 한도 내에서' 정산해주는 구조라면 로직 변경 필요.
+                // 요구사항 문서에는 "강사 정산은 usedAmount (실제 수업 진행 금액)를 기준으로 계산"이라고 되어 있음.
+                // usedAmount는 이미 수업 횟수 * 단가로 계산된 금액임.
+                // 즉, 학생이 돈을 냈든 안 냈든 수업을 했으면 강사에게 정산해주는 것이 일반적임 (학원 부담).
+                // 다만, StudentBalance를 업데이트하는 로직은 TuitionService에서 수행하므로 여기서는 강사 정산금만 계산하면 됨.
+                
+                // 따라서 기존 로직 유지 (수업 횟수 기반 정산)
                 BigDecimal price = record.getLecture().getDefaultPrice();
                 if (price != null) {
                     totalAmount = totalAmount.add(price);
@@ -111,56 +123,11 @@ public class SettlementServiceImpl implements SettlementService {
                 continue;
             }
 
-            // 공제 항목 적용 로직 추가
+            // 공제 항목 적용
             List<DeductionItem> deductionItems = deductionItemRepository.findAllByAcademy(academy);
-            BigDecimal taxAmount = BigDecimal.ZERO;
-
-            // 공제 항목이 없으면 기본 3.3% 적용 (하위 호환성)
-            if (deductionItems.isEmpty()) {
-                BigDecimal taxRate = new BigDecimal("0.033");
-                taxAmount = totalAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.FLOOR);
-            } else {
-                for (DeductionItem item : deductionItems) {
-                    BigDecimal deduction = BigDecimal.ZERO;
-                    if (item.getType() == DeductionType.PERCENT) {
-                        // 퍼센트 공제 (예: 3.3 -> 0.033)
-                        BigDecimal rate = item.getValue().divide(BigDecimal.valueOf(100));
-                        deduction = totalAmount.multiply(rate).setScale(0, java.math.RoundingMode.FLOOR);
-                    } else if (item.getType() == DeductionType.FIXED_AMOUNT) {
-                        // 고정 금액 공제
-                        deduction = item.getValue();
-                    }
-                    taxAmount = taxAmount.add(deduction);
-                }
-            }
+            BigDecimal taxAmount = calculateTax(totalAmount, deductionItems);
 
             settlement.updateTotalAmount(totalAmount);
-            // Settlement 엔티티에 taxAmount를 직접 저장하는 필드가 없어서, 
-            // 현재 구조상으로는 totalAmount만 업데이트하고, getRealAmount() 등에서 계산하거나
-            // Settlement 엔티티에 taxAmount 필드를 추가해야 함.
-            // 하지만 기존 SettlementResponse 로직을 보면 taxAmount를 별도로 저장하지 않고 3.3%로 고정 계산하고 있음.
-            // 따라서 Settlement 엔티티 수정이 필요함.
-            // 일단 여기서는 totalAmount만 저장하고, 추후 Settlement 엔티티에 taxAmount 필드 추가를 제안하거나
-            // SettlementResponse에서 동적으로 계산하도록 해야 함.
-            
-            // *중요*: Settlement 엔티티를 확인해보니 taxAmount 필드가 없음.
-            // 기존 SettlementResponse.from() 메서드에서 3.3%를 하드코딩해서 계산하고 있을 가능성이 큼.
-            // 이를 해결하기 위해 Settlement 엔티티에 taxAmount 필드를 추가하거나,
-            // SettlementResponse 생성 시점에 다시 계산해야 함.
-            // 하지만 조회 시점에 다시 계산하려면 DeductionItem 이력 관리가 안 되므로 (공제율이 바뀌면 과거 정산도 바뀜),
-            // 정산 시점에 계산된 세금을 저장하는 것이 맞음.
-            
-            // 이번 단계에서는 Settlement 엔티티 수정 없이, 
-            // SettlementResponse에서 공제 항목을 반영하도록 수정하는 것은 불가능 (과거 데이터 보존 문제).
-            // 따라서 Settlement 엔티티에 taxAmount 필드를 추가하는 것이 가장 확실한 방법임.
-            
-            // 하지만 사용자의 요청은 "공제 항목 설정" 기능 구현이므로,
-            // 일단 SettlementServiceImpl에서는 공제 항목을 조회하여 계산하는 로직까지만 구현하고,
-            // 실제 저장(settlement.setTaxAmount(taxAmount))은 Settlement 엔티티 수정이 선행되어야 함.
-            
-            // 현재 Settlement 엔티티에는 totalAmount만 있고, taxAmount는 없음.
-            // 임시로 totalAmount만 저장.
-            
             settlementRepository.save(settlement);
 
             log.info("✅ 정산 완료: 강사={}, 금액={}, 공제액(예상)={}", instructor.getName(), totalAmount, taxAmount);
@@ -176,12 +143,6 @@ public class SettlementServiceImpl implements SettlementService {
 
         Academy academy = admin.getAcademy();
         List<Settlement> settlements = settlementRepository.findAllByAcademyAndYearMonth(academy, yearMonth);
-        
-        // 조회 시점에도 공제 항목을 반영하여 Response 생성
-        // 주의: 이 방식은 공제 항목이 변경되면 과거 정산 내역의 세금도 변하는 문제가 있음.
-        // 정석적인 방법은 Settlement 엔티티에 taxAmount를 저장하는 것임.
-        // 여기서는 일단 조회 시점에 계산하도록 구현 (DeductionItemRepository 필요)
-        
         List<DeductionItem> deductionItems = deductionItemRepository.findAllByAcademy(academy);
         
         return settlements.stream()
@@ -228,7 +189,6 @@ public class SettlementServiceImpl implements SettlementService {
                 .collect(Collectors.toList());
     }
     
-    // 세금 계산 헬퍼 메서드
     private BigDecimal calculateTax(BigDecimal totalAmount, List<DeductionItem> deductionItems) {
         if (deductionItems.isEmpty()) {
             return totalAmount.multiply(new BigDecimal("0.033")).setScale(0, java.math.RoundingMode.FLOOR);

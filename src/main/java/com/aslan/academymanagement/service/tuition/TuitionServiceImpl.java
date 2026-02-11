@@ -47,7 +47,7 @@ public class TuitionServiceImpl implements TuitionService {
                 .build();
 
         tuitionPaymentRepository.save(payment);
-
+        
         // 수납 후 잔액 재계산
         calculateBalance(studentId, request.getYearMonth());
     }
@@ -87,7 +87,7 @@ public class TuitionServiceImpl implements TuitionService {
         BigDecimal carryOverAmount = BigDecimal.ZERO;
         StudentBalance prevBalance = studentBalanceRepository.findByStudentAndYearMonth(student, prevYm.toString())
                 .orElse(null);
-
+        
         if (prevBalance != null) {
             carryOverAmount = prevBalance.getCurrentBalance();
         }
@@ -101,7 +101,7 @@ public class TuitionServiceImpl implements TuitionService {
         // 3. 당월 사용액 계산 (수업료 차감)
         LocalDate startDate = currentYm.atDay(1);
         LocalDate endDate = currentYm.atEndOfMonth();
-
+        
         List<AttendanceStatus> targetStatuses = List.of(
                 AttendanceStatus.ATTENDED,
                 AttendanceStatus.LATE,
@@ -134,7 +134,7 @@ public class TuitionServiceImpl implements TuitionService {
 
         balance.updateAmounts(paidAmount, usedAmount, carryOverAmount);
         studentBalanceRepository.save(balance);
-
+        
         log.info("💰 잔액 갱신: 학생={}, 월={}, 이월={}, 납부={}, 사용={}, 잔액={}",
                 student.getName(), yearMonth, carryOverAmount, paidAmount, usedAmount, balance.getCurrentBalance());
     }
