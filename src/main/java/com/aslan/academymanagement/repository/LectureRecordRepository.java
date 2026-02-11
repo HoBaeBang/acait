@@ -2,6 +2,7 @@ package com.aslan.academymanagement.repository;
 
 import com.aslan.academymanagement.domain.LectureRecord;
 import com.aslan.academymanagement.domain.Member;
+import com.aslan.academymanagement.domain.Student;
 import com.aslan.academymanagement.domain.enums.AttendanceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,6 +38,19 @@ public interface LectureRecordRepository extends JpaRepository<LectureRecord, Lo
             "AND lr.attendanceStatus IN :statuses")
     List<LectureRecord> findByInstructorAndDateBetweenAndStatusIn(
             @Param("instructor") Member instructor,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<AttendanceStatus> statuses
+    );
+
+    // 특정 학생의 특정 기간 내 유효 수업 기록 조회 (잔액 계산용)
+    @Query("SELECT lr FROM LectureRecord lr " +
+            "JOIN FETCH lr.lecture l " +
+            "WHERE lr.student = :student " +
+            "AND lr.date BETWEEN :startDate AND :endDate " +
+            "AND lr.attendanceStatus IN :statuses")
+    List<LectureRecord> findByStudentAndDateBetweenAndStatusIn(
+            @Param("student") Student student,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("statuses") List<AttendanceStatus> statuses
