@@ -15,6 +15,7 @@ import com.aslan.academymanagement.repository.LectureRepository;
 import com.aslan.academymanagement.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Primary // Bean 충돌 해결을 위해 추가
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentManagementService {
 
@@ -134,8 +136,8 @@ public class StudentServiceImpl implements StudentManagementService {
     public List<StudentResponse> getAllStudents(Member loginUser) {
         List<Student> students;
 
-        if (loginUser.getRole() == Role.ROLE_OWNER) {
-            // 원장은 학원 전체 학생 조회
+        if (loginUser.getRole() == Role.ROLE_OWNER || loginUser.getRole() == Role.ROLE_MANAGER) {
+            // 원장, 실장은 학원 전체 학생 조회
             students = studentRepository.findAllByAcademy(loginUser.getAcademy());
         } else if (loginUser.getRole() == Role.ROLE_INSTRUCTOR) {
             // 강사는 본인의 수강생만 조회

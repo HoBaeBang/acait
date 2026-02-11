@@ -27,6 +27,7 @@ public class LectureRequest {
     private LocalDate endDate;
     private List<ScheduleRequest> schedules;
     private List<Long> studentIds; // 추가: 동시 배정할 학생 ID 목록
+    private Long instructorId; // 추가: 강사 지정 (원장/실장 전용)
 
     public Lecture toLecture() {
         return Lecture.builder()

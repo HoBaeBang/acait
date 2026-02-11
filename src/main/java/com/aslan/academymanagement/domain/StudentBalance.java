@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 @Table(name = "student_balances",
     uniqueConstraints = {
         @UniqueConstraint(
-            name = "uk_student_year_month",
-            columnNames = {"student_id", "year_month"}
+            name = "uk_student_target_month",
+            columnNames = {"student_id", "target_month"}
         )
     }
 )
@@ -27,7 +27,7 @@ public class StudentBalance {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column(name = "year_month", nullable = false)
+    @Column(name = "target_month", nullable = false)
     private String yearMonth; // 대상 월 (YYYY-MM)
 
     @Column(name = "paid_amount", nullable = false)

@@ -15,7 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
@@ -42,7 +42,7 @@ public class TuitionPaymentController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long studentId,
             @Valid @RequestBody TuitionPaymentRequest request) {
-
+        
         Member manager = getMember(userDetails);
         tuitionService.createPayment(manager, studentId, request);
         return ResponseEntity.ok().build();

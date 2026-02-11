@@ -34,23 +34,20 @@ public class SettlementServiceImpl implements SettlementService {
     private final LectureStudentRepository lectureStudentRepository;
     private final LectureRepository lectureRepository;
     private final DeductionItemRepository deductionItemRepository;
-    private final StudentBalanceRepository studentBalanceRepository; // 추가
+    private final StudentBalanceRepository studentBalanceRepository;
 
     @Override
     public void calculateMonthlySettlement(String yearMonth) {
         log.info("💰 {} 월 정산 계산 시작 (전체)", yearMonth);
-        // 기존 로직 (전체 정산)
         calculateSettlementInternal(yearMonth, null);
     }
 
     @Override
     public void calculateMySettlement(Member instructor, String yearMonth) {
         log.info("💰 {} 월 정산 계산 시작 (강사: {})", yearMonth, instructor.getName());
-        // 강사 본인 정산
         calculateSettlementInternal(yearMonth, instructor);
     }
 
-    // 공통 정산 로직
     private void calculateSettlementInternal(String yearMonth, Member targetInstructor) {
         YearMonth ym = YearMonth.parse(yearMonth);
         LocalDate startDate = ym.atDay(1);
@@ -63,7 +60,6 @@ public class SettlementServiceImpl implements SettlementService {
                 AttendanceStatus.ABSENT
         );
 
-        // 1. 정산 대상 수업 기록 조회
         List<LectureRecord> records;
         if (targetInstructor != null) {
             records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses).stream()
@@ -73,11 +69,9 @@ public class SettlementServiceImpl implements SettlementService {
             records = lectureRecordRepository.findSettlementTargets(startDate, endDate, targetStatuses);
         }
 
-        // 2. 강사별 그룹화
         Map<Member, List<LectureRecord>> recordsByInstructor = records.stream()
                 .collect(Collectors.groupingBy(record -> record.getLecture().getTeacher()));
 
-        // 3. 계산 및 저장
         for (Map.Entry<Member, List<LectureRecord>> entry : recordsByInstructor.entrySet()) {
             Member instructor = entry.getKey();
             List<LectureRecord> instructorRecords = entry.getValue();
@@ -93,17 +87,6 @@ public class SettlementServiceImpl implements SettlementService {
                     continue;
                 }
 
-                // [수강료 이월 로직 적용]
-                // 학생의 잔액이 충분한지 확인하고 정산 금액에 반영해야 함.
-                // 하지만 현재 구조상 강사 정산은 '수업 횟수 * 단가'로 계산되고 있음.
-                // 수강료 납부 여부와 관계없이 강사에게 정산해주는 구조라면 기존 로직 유지.
-                // 만약 '납부된 수강료 한도 내에서' 정산해주는 구조라면 로직 변경 필요.
-                // 요구사항 문서에는 "강사 정산은 usedAmount (실제 수업 진행 금액)를 기준으로 계산"이라고 되어 있음.
-                // usedAmount는 이미 수업 횟수 * 단가로 계산된 금액임.
-                // 즉, 학생이 돈을 냈든 안 냈든 수업을 했으면 강사에게 정산해주는 것이 일반적임 (학원 부담).
-                // 다만, StudentBalance를 업데이트하는 로직은 TuitionService에서 수행하므로 여기서는 강사 정산금만 계산하면 됨.
-                
-                // 따라서 기존 로직 유지 (수업 횟수 기반 정산)
                 BigDecimal price = record.getLecture().getDefaultPrice();
                 if (price != null) {
                     totalAmount = totalAmount.add(price);
@@ -123,7 +106,6 @@ public class SettlementServiceImpl implements SettlementService {
                 continue;
             }
 
-            // 공제 항목 적용
             List<DeductionItem> deductionItems = deductionItemRepository.findAllByAcademy(academy);
             BigDecimal taxAmount = calculateTax(totalAmount, deductionItems);
 
@@ -152,7 +134,7 @@ public class SettlementServiceImpl implements SettlementService {
                     BigDecimal realAmount = totalAmount.subtract(taxAmount);
                     
                     return SettlementResponse.builder()
-                            .settlementId(settlement.getId())
+                            .id(settlement.getId()) // 수정됨: settlementId -> id
                             .instructorName(settlement.getInstructor().getName())
                             .yearMonth(settlement.getYearMonth())
                             .totalAmount(totalAmount)
@@ -177,7 +159,7 @@ public class SettlementServiceImpl implements SettlementService {
                     BigDecimal realAmount = totalAmount.subtract(taxAmount);
                     
                     return SettlementResponse.builder()
-                            .settlementId(settlement.getId())
+                            .id(settlement.getId()) // 수정됨: settlementId -> id
                             .instructorName(settlement.getInstructor().getName())
                             .yearMonth(settlement.getYearMonth())
                             .totalAmount(totalAmount)
@@ -283,12 +265,10 @@ public class SettlementServiceImpl implements SettlementService {
     @Override
     @Transactional(readOnly = true)
     public SettlementForecastResponse getSettlementForecast(Member instructor, String yearMonth) {
-        // 1. 확정 금액
         BigDecimal confirmedAmount = settlementRepository.findByInstructorAndYearMonth(instructor, yearMonth)
                 .map(Settlement::getTotalAmount)
                 .orElse(BigDecimal.ZERO);
 
-        // 2. 예정 금액 계산
         BigDecimal expectedAmount = BigDecimal.ZERO;
         
         YearMonth ym = YearMonth.parse(yearMonth);
@@ -338,7 +318,6 @@ public class SettlementServiceImpl implements SettlementService {
     private SettlementForecastResponse buildForecastResponse(Member instructor, BigDecimal confirmed, BigDecimal expected) {
         BigDecimal total = confirmed.add(expected);
         
-        // 공제 항목 적용
         List<DeductionItem> deductionItems = deductionItemRepository.findAllByAcademy(instructor.getAcademy());
         BigDecimal tax = calculateTax(total, deductionItems);
         BigDecimal real = total.subtract(tax);

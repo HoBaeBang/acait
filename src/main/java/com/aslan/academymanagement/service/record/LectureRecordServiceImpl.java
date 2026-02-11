@@ -7,12 +7,14 @@ import com.aslan.academymanagement.repository.LearningHistoryRepository;
 import com.aslan.academymanagement.repository.LectureRecordRepository;
 import com.aslan.academymanagement.repository.LectureRepository;
 import com.aslan.academymanagement.repository.StudentRepository;
+import com.aslan.academymanagement.service.tuition.TuitionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.Map;
 
 @Slf4j
@@ -25,6 +27,7 @@ public class LectureRecordServiceImpl implements LectureRecordService {
     private final LearningHistoryRepository learningHistoryRepository;
     private final LectureRepository lectureRepository;
     private final StudentRepository studentRepository;
+    private final TuitionService tuitionService; // 추가
 
     @Override
     public void createRecord(Member teacher, RecordRequest request) {
@@ -83,6 +86,11 @@ public class LectureRecordServiceImpl implements LectureRecordService {
 
         // 6. 학습 이력(History) 자동 생성 (Side Effect)
         createLearningHistory(savedRecord, request.getMaterialInfo());
+        
+        // 7. 잔액 재계산 (수업료 차감 반영)
+        // 수업이 기록되면 해당 월의 사용액(usedAmount)이 증가하므로 잔액을 갱신해야 함.
+        String yearMonth = YearMonth.from(request.getDate()).toString();
+        tuitionService.calculateBalance(student.getId(), yearMonth);
     }
 
     private void createLearningHistory(LectureRecord record, Map<String, Object> materialInfo) {

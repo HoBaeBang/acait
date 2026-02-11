@@ -31,7 +31,7 @@ public class TuitionPayment {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
-    @Column(name = "year_month", nullable = false)
+    @Column(name = "target_month", nullable = false)
     private String yearMonth; // 납부 대상 월 (YYYY-MM)
 
     @Column(columnDefinition = "TEXT")

@@ -43,7 +43,27 @@ public class LectureServiceImpl implements LectureService {
             lecture.setEndDate(lecture.getStartDate().plusMonths(3));
         }
 
-        lecture.setTeacher(teacher);
+        // 강사 배정 로직 수정
+        if (req.getInstructorId() != null) {
+            // 원장 또는 실장만 다른 강사를 지정할 수 있음
+            if (teacher.getRole() != Role.ROLE_OWNER && teacher.getRole() != Role.ROLE_MANAGER) {
+                throw new IllegalArgumentException("강사를 지정할 권한이 없습니다.");
+            }
+
+            Member instructor = memberRepository.findById(req.getInstructorId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 강사가 없습니다."));
+
+            if (!instructor.getAcademy().getId().equals(teacher.getAcademy().getId())) {
+                throw new IllegalArgumentException("다른 학원의 강사입니다.");
+            }
+            lecture.setTeacher(instructor);
+        } else {
+            // 기본값: 로그인한 사용자
+            lecture.setTeacher(teacher);
+        }
+
+        // 학원 정보 설정 (필수)
+        lecture.setAcademy(teacher.getAcademy());
 
         List<Schedule> schedules = req.toSchedules();
         for (Schedule schedule : schedules) {
@@ -108,9 +128,9 @@ public class LectureServiceImpl implements LectureService {
 
         List<Lecture> lectures;
 
-        // 1. instructorId가 있으면 해당 강사로 필터링 (원장만 가능)
+        // 1. instructorId가 있으면 해당 강사로 필터링 (원장/실장만 가능)
         if (instructorId != null) {
-            if (loginUser.getRole() != Role.ROLE_OWNER) {
+            if (loginUser.getRole() != Role.ROLE_OWNER && loginUser.getRole() != Role.ROLE_MANAGER) {
                 throw new IllegalArgumentException("다른 강사의 일정을 조회할 권한이 없습니다.");
             }
             Member instructor = memberRepository.findById(instructorId)
@@ -121,9 +141,9 @@ public class LectureServiceImpl implements LectureService {
             }
             lectures = lectureRepository.findAllByTeacher(instructor);
         }
-        // 2. viewAll=true이면 전체 조회 (원장만 가능)
+        // 2. viewAll=true이면 전체 조회 (원장/실장만 가능)
         else if (Boolean.TRUE.equals(viewAll)) {
-            if (loginUser.getRole() != Role.ROLE_OWNER) {
+            if (loginUser.getRole() != Role.ROLE_OWNER && loginUser.getRole() != Role.ROLE_MANAGER) {
                 throw new IllegalArgumentException("전체 일정을 조회할 권한이 없습니다.");
             }
             // 학원 전체 강의 조회

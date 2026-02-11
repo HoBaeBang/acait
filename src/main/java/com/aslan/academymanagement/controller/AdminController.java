@@ -20,7 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +50,7 @@ public class AdminController {
     }
 
     @GetMapping("/instructors")
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')") // 권한 변경: 실장도 조회 가능
     @Operation(summary = "강사 목록 조회", description = "내 학원의 모든 강사(승인 대기 포함) 목록을 조회합니다.")
     public ResponseEntity<List<MemberResponse>> getInstructors(@AuthenticationPrincipal UserDetails userDetails) {
         Member owner = getMember(userDetails);
